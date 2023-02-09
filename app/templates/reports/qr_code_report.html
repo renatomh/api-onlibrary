@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>{{_('QR Code')}}</title>
+	
+	<!-- Getting the font family -->
+	<link href="" rel="stylesheet">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;400&display=swap" rel="stylesheet">
+	
+	<!-- Defining the styles -->
+    <style type="text/css">
+		@page {
+			size: portrait;
+			margin: 0;
+		}
+
+		 #main_container {
+            font-family: 'Roboto', helvetica, arial, verdana, sans-serif;
+            font-size: 10px;
+			text-align: center;
+			display: flex;
+			flex-wrap: wrap;
+        }
+
+		.label_container {
+			width: 45%;
+			border: 2px solid black;
+			margin: 4px;
+			padding: 2px 4px;
+			display: flex;
+  			align-items: center;
+			background-color: hsl(240, 3%, 64%, 10%);
+		}
+
+		.label_text {
+			width: 75%;
+		}
+
+		.label_text > .title {
+			font-weight: bold;
+		}
+
+		.label_text > .subtitle {
+			font-weight: normal;
+			color: #1515ad;
+		}
+
+		.label_logo {
+			max-height: 18px;
+		}
+
+		.label_qr_code {
+			max-height: 112px;
+		}
+    </style>
+</head>
+
+<body>
+    <div id="main_container">
+		{% for label in labels %}
+		<div class="label_container">
+			<img class="label_qr_code" alt="qrcode" src="{{label.image_data}}"/>
+			<div class="label_text">
+				<img class="label_logo" alt="logo" src="{{logo}}"/>
+				<h2 class="title">{{label.title}}</h2>
+				<h3 class="subtitle">{{label.subtitle}}</h3>
+			</div>
+		</div>
+		{% endfor %}
+
+</body>
+
+</html>

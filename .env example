@@ -1,0 +1,56 @@
+# Defining application secret token
+APP_SECRET=secret
+# Defining port, host and URLs
+PORT=8080
+HOST=localhost
+APP_API_URL=http://localhost:8080
+APP_WEB_URL=http://localhost:3000
+API_DOC_URL=http://api-doc.domain.com
+
+# Defining the integration user credentials (used for microservices, jobs, etc.)
+INTEGRATION_USER=integration.user
+INTEGRATION_PASS=INTEGRATION_PASS
+
+# Defining the timezone name
+TZ=UTC #UTC, America/Sao_Paulo, US/Central, US/Pacific
+
+# Defining mail driver
+MAIL_DRIVER=smtp #ses
+# Mail details and credentials (when using raw smtp)
+MAIL_USER=user@example.com
+MAIL_PASS=example-pass
+SMTP_HOST=smtp.example.com #smtp.zoho.com
+SMTP_PORT=465
+
+# Defining storage driver
+STORAGE_DRIVER=disk #s3
+
+# Defining translation driver
+TRANSLATION_DRIVER=deep-translator
+
+# AWS access keys
+AWS_ACCESS_KEY_ID=key-id
+AWS_SECRET_ACCESS_KEY=key-secret
+AWS_REGION=us-east-2
+AWS_BUCKET=flask-app
+
+# Defining SQL driver
+SQL_DRIVER=sqlite #sqlite, mysql, postgresql, mssql
+# SQL credentials
+SQL_HOST=localhost
+SQL_PORT=3306 #3306, 5432, 1433
+SQL_DB=onlibrary
+SQL_USER=root
+SQL_PASS=example-pass
+
+# Defining push notifications driver
+PUSH_NOTIFICATION_DRIVER=fcm #fcm
+
+# FCM credentials JSON file
+FCM_CREDS_JSON_FILE=service-credentials.json
+
+# For SQL Server, it is required to have the ODBC driver installed
+ODBC_DRIVER=ODBC+Driver+17+for+SQL+Server
+
+# FFmpeg executable path (must be installed on the machine)
+FFMPEG_PATH=/usr/bin/ffmpeg #/usr/bin/ffmpeg, C:\ffmpeg.exe

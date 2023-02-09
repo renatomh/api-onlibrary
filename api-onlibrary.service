@@ -1,0 +1,19 @@
+# Service for Ubuntu/Unix systems
+# This file should be located at '/etc/systemd/system/'
+
+[Unit]
+Description=uWSGI instance to serve Flask App
+After=network.target
+
+[Service]
+# Should be updated to the system user
+User=onlibrary
+Group=www-data
+# Should be updated to the app path/env
+WorkingDirectory=/home/onlibrary/systems/api-onlibrary
+Environment="PATH=/home/onlibrary/systems/api-onlibrary/env/bin"
+# You should choose a port not already in use
+ExecStart=/home/onlibrary/systems/api-onlibrary/env/bin/gunicorn --worker-class eventlet --bind 0.0.0.0:8080 -m 007 wsgi:app --reload
+
+[Install]
+WantedBy=multi-user.target

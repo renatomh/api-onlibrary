@@ -1,0 +1,459 @@
+# French translations for PROJECT.
+# Copyright (C) 2023 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2023-02-09 13:15-0300\n"
+"PO-Revision-Date: 2023-02-08 15:44-0300\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: fr <LL@li.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"Generated-By: Babel 2.9.1\n"
+
+#: app/__init__.py:99
+msgid "You must provide the 'event' name."
+msgstr "Vous devez fournir le nom de \"l'événement\"."
+
+#: app/__init__.py:102
+msgid ""
+"You must inform if message should be broadcast ('should_broadcast' flag as "
+"'true' or 'false')."
+msgstr ""
+"Vous devez indiquer si le message doit être diffusé (indicateur "
+"'should_broadcast' comme 'true' ou 'false')."
+
+#: app/__init__.py:106
+msgid "You must inform the session ID ('sid') when not broadcasting."
+msgstr ""
+"Vous devez renseigner l'ID de session ('sid') lorsqu'il n'y a pas de "
+"diffusion."
+
+#: app/__init__.py:110
+msgid "You must provide the message content as 'json' to be sent."
+msgstr "Vous devez fournir le contenu du message au format 'json' à envoyer."
+
+#: app/__init__.py:125 app/__init__.py:208
+msgid "Message sent successfully"
+msgstr "message envoyé avec succès"
+
+#: app/__init__.py:176
+msgid "You must provide the notification 'title'."
+msgstr "Vous devez fournir le \"titre\" de la notification."
+
+#: app/__init__.py:179
+msgid "You must provide the notification 'body'."
+msgstr "Vous devez fournir le « corps » de la notification."
+
+#: app/__init__.py:182
+msgid ""
+"You must inform if message should be multicast ('should_multicast' flag as "
+"'true' or 'false')."
+msgstr ""
+"Vous devez indiquer si le message doit être multicast (indicateur "
+"'should_multicast' comme 'true' ou 'false')."
+
+#: app/__init__.py:187
+msgid "You must inform one token ('token') when not multicasting."
+msgstr ""
+"Vous devez renseigner un jeton ('token') lorsqu'il n'y a pas de "
+"multidiffusion."
+
+#: app/__init__.py:192
+msgid "You must inform a list of tokens ('tokens') when multicasting."
+msgstr ""
+"Vous devez renseigner une liste de tokens ('tokens') lors de la "
+"multidiffusion."
+
+#: app/__init__.py:250
+msgid "Resource not found."
+msgstr "Ressource introuvable."
+
+#: app/__init__.py:255
+msgid "Content too large"
+msgstr "Contenu trop volumineux"
+
+#: app/__init__.py:260
+msgid "Ratelimit exceeded"
+msgstr "Limite de débit dépassée"
+
+#: app/middleware.py:29 app/middleware.py:36 app/middleware.py:45
+msgid "Authentication failed. Please login to access the resource."
+msgstr ""
+"Authentification échouée. Veuillez vous connecter pour accéder à la "
+"ressource."
+
+#: app/middleware.py:82 app/middleware.py:88
+msgid ""
+"Authorization failed. Please use an account with the correct access rights."
+msgstr ""
+"L'autorisation à échouée. Veuillez utiliser un compte avec les droits "
+"d'accès corrects."
+
+#: app/modules/utils.py:311 app/modules/utils.py:320
+msgid "Not a valid datetime value"
+msgstr "Pas une valeur datetime valide"
+
+#: app/modules/utils.py:336 app/modules/utils.py:341
+msgid "Not a valid date value"
+msgstr "Pas une valeur de date valide"
+
+#: app/modules/utils.py:357 app/modules/utils.py:362
+msgid "Not a valid time value"
+msgstr "Pas une valeur de temps valide"
+
+#: app/modules/document/controllers.py:137
+#: app/modules/document/controllers.py:216
+#: app/modules/document/controllers.py:535
+#: app/modules/document/controllers.py:689
+msgid "This code is already in use."
+msgstr "Ce code est déjà utilisé."
+
+#: app/modules/document/controllers.py:186
+#: app/modules/document/controllers.py:248
+#: app/modules/document/controllers.py:299
+#: app/modules/document/controllers.py:659
+#: app/modules/document/controllers.py:748
+#: app/modules/document/controllers.py:807
+#: app/modules/document/controllers.py:956
+#: app/modules/document/controllers.py:1003
+#: app/modules/document/controllers.py:1150
+#: app/modules/document/controllers.py:1195 app/modules/log/controllers.py:177
+#: app/modules/log/controllers.py:225
+#: app/modules/notification/controllers.py:235
+#: app/modules/notification/controllers.py:286
+#: app/modules/notification/controllers.py:356
+#: app/modules/notification/controllers.py:402
+#: app/modules/notification/controllers.py:439
+#: app/modules/settings/controllers.py:169
+#: app/modules/settings/controllers.py:219
+#: app/modules/settings/controllers.py:263
+#: app/modules/settings/controllers.py:386
+#: app/modules/settings/controllers.py:427
+#: app/modules/settings/controllers.py:471
+#: app/modules/settings/controllers.py:589
+#: app/modules/settings/controllers.py:635
+#: app/modules/settings/controllers.py:679
+#: app/modules/users/controllers.py:218 app/modules/users/controllers.py:264
+#: app/modules/users/controllers.py:775 app/modules/users/controllers.py:1489
+#: app/modules/users/controllers.py:1519 app/modules/users/controllers.py:1652
+#: app/modules/users/controllers.py:1682 app/modules/users/controllers.py:1815
+#: app/modules/users/controllers.py:1845
+msgid "No item found"
+msgstr "Aucun élément trouvé"
+
+#: app/modules/document/controllers.py:225
+#: app/modules/document/controllers.py:281
+#: app/modules/document/controllers.py:549
+#: app/modules/document/controllers.py:698
+#: app/modules/document/controllers.py:781
+msgid "Item library not allowed for user"
+msgstr "Bibliothèque d'éléments non autorisée pour l'utilisateur"
+
+#: app/modules/document/controllers.py:503
+msgid "File not sent"
+msgstr "Fichier non envoyé"
+
+#: app/modules/document/controllers.py:512
+#: app/modules/users/controllers.py:995
+msgid "File extension not allowed"
+msgstr "Extension de fichier non autorisée"
+
+#: app/modules/document/controllers.py:544
+#: app/modules/document/controllers.py:706
+msgid "No document category found"
+msgstr "Aucune catégorie de document trouvée"
+
+#: app/modules/document/controllers.py:556
+#: app/modules/document/controllers.py:719
+msgid "Alert email must be provided, since user has no email associated"
+msgstr ""
+"L'e-mail d'alerte doit être fourni, car l'utilisateur n'a pas d'e-mail "
+"associé"
+
+#: app/modules/document/controllers.py:563
+#: app/modules/document/controllers.py:725
+msgid "Days to alert must be provided"
+msgstr "Les jours d'alerte doivent être fournis"
+
+#: app/modules/document/controllers.py:711
+msgid "Document category does not belong to defined library"
+msgstr "La catégorie de document n'appartient pas à la bibliothèque définie"
+
+#: app/modules/document/controllers.py:890
+msgid "This document is already associated to the model"
+msgstr "Ce document est déjà associé au modèle"
+
+#: app/modules/document/controllers.py:895
+#: app/modules/document/controllers.py:1083
+#: app/modules/document/controllers.py:1211
+msgid "No document found"
+msgstr "Aucun document trouvé"
+
+#: app/modules/document/controllers.py:906 app/modules/log/controllers.py:125
+msgid "No model found"
+msgstr "Aucun modèle trouvé"
+
+#: app/modules/document/controllers.py:911 app/modules/log/controllers.py:130
+msgid "Model not applicable"
+msgstr "Modèle non applicable"
+
+#: app/modules/document/controllers.py:1088
+msgid "Only the document owner can share the file"
+msgstr "Seul le propriétaire du document peut partager le fichier"
+
+#: app/modules/document/controllers.py:1093
+#: app/modules/notification/controllers.py:181
+#: app/modules/users/controllers.py:455 app/modules/users/controllers.py:507
+#: app/modules/users/controllers.py:553 app/modules/users/controllers.py:607
+#: app/modules/users/controllers.py:845 app/modules/users/controllers.py:891
+#: app/modules/users/controllers.py:916 app/modules/users/controllers.py:1000
+#: app/modules/users/controllers.py:1072
+msgid "No user found"
+msgstr "Aucun utilisateur trouvé"
+
+#: app/modules/document/controllers.py:1098
+msgid "You already own this file"
+msgstr "Vous possédez déjà ce fichier"
+
+#: app/modules/document/controllers.py:1106
+msgid "This document is already shared with the user"
+msgstr "Ce document est déjà partagé avec l'utilisateur"
+
+#: app/modules/document/controllers.py:1177
+msgid "Only the document owner can stop sharing the file"
+msgstr "Seul le propriétaire du document peut arrêter de partager le fichier"
+
+#: app/modules/document/controllers.py:1216
+msgid "Users will be notified"
+msgstr "Les utilisateurs seront avertis"
+
+#: app/modules/document/utils.py:53 app/modules/document/utils.py:72
+#: app/templates/emails/document_expiration.html:100
+msgid "Document Expiration"
+msgstr "Expiration des documents"
+
+#: app/modules/document/utils.py:66
+msgid "Your document is about to expire"
+msgstr "Votre document est sur le point d'expirer"
+
+#: app/modules/document/utils.py:67
+msgid "Expires At"
+msgstr "Expire à"
+
+#: app/modules/document/utils.py:67
+msgid "days"
+msgstr "jours"
+
+#: app/modules/document/utils.py:68
+#: app/templates/emails/document_expiration.html:106
+msgid "Description"
+msgstr "Description"
+
+#: app/modules/document/utils.py:69
+#: app/templates/emails/document_expiration.html:112
+msgid "File"
+msgstr "Déposer"
+
+#: app/modules/notification/controllers.py:325
+msgid "Only the notified user can set this notification as read"
+msgstr "Seul l'utilisateur notifié peut définir cette notification comme lue"
+
+#: app/modules/notification/controllers.py:333
+msgid "The read date cannot be in the future."
+msgstr "La date de lecture ne peut pas être dans le futur."
+
+#: app/modules/notification/controllers.py:421
+msgid "Only the notified user can delete this notification"
+msgstr "Seul l'utilisateur notifié peut supprimer cette notification"
+
+#: app/modules/settings/controllers.py:113
+#: app/modules/settings/controllers.py:194
+#: app/modules/settings/controllers.py:544
+#: app/modules/settings/controllers.py:614
+msgid "This name is already in use."
+msgstr "Ce nom est déjà utilisé."
+
+#: app/modules/settings/controllers.py:119
+msgid "No city found"
+msgstr "Aucune ville trouvée"
+
+#: app/modules/settings/controllers.py:337
+msgid "No country found"
+msgstr "Aucun pays trouvé"
+
+#: app/modules/users/controllers.py:99
+msgid "Account not active. Please contact the system admin."
+msgstr "Compte non actif. Veuillez contacter l'administrateur système."
+
+#: app/modules/users/controllers.py:123
+msgid "Not provided"
+msgstr "Non fourni"
+
+#: app/modules/users/controllers.py:145
+msgid "User/password combination doesn't match."
+msgstr "La combinaison utilisateur/mot de passe ne correspond pas."
+
+#: app/modules/users/controllers.py:292 app/modules/users/controllers.py:703
+msgid "This email address is already registered."
+msgstr "Cette adresse email est déjà enregistrée."
+
+#: app/modules/users/controllers.py:318
+msgid "This email domain is not allowed."
+msgstr "Ce domaine de messagerie n'est pas autorisé."
+
+#: app/modules/users/controllers.py:348
+msgid "Welcome to OnLibrary!"
+msgstr "Bienvenue sur OnLibrary !"
+
+#: app/modules/users/controllers.py:382
+msgid "This email address is not registered."
+msgstr "Cette adresse e-mail n'est pas enregistrée."
+
+#: app/modules/users/controllers.py:398
+msgid "OnLibrary Password Reset"
+msgstr "Réinitialisation du mot de passe OnLibrary"
+
+#: app/modules/users/controllers.py:602 app/modules/users/controllers.py:715
+#: app/modules/users/controllers.py:812 app/modules/users/controllers.py:1191
+#: app/modules/users/controllers.py:1229 app/modules/users/controllers.py:1265
+#: app/modules/users/controllers.py:1353 app/modules/users/controllers.py:1428
+#: app/modules/users/controllers.py:1594 app/modules/users/controllers.py:1757
+msgid "No role found"
+msgstr "Aucun rôle trouvé"
+
+#: app/modules/users/controllers.py:709 app/modules/users/controllers.py:804
+#: app/modules/users/controllers.py:1029
+msgid "This username is already in use."
+msgstr "Ce nom d'utilisateur est déjà utilisé."
+
+#: app/modules/users/controllers.py:822 app/modules/users/controllers.py:1049
+msgid "Passwords don't match."
+msgstr "Les mots de passe ne correspondent pas."
+
+#: app/modules/users/controllers.py:1039
+msgid "Please inform your current password."
+msgstr "Veuillez renseigner votre mot de passe actuel."
+
+#: app/modules/users/controllers.py:1044
+msgid "The provided current password is wrong."
+msgstr "Le mot de passe actuel fourni est erroné."
+
+#: app/modules/users/controllers.py:1437
+msgid "The route on the selected method is already in use for this role."
+msgstr "La route sur la méthode sélectionnée est déjà utilisée pour ce rôle."
+
+#: app/modules/users/controllers.py:1602 app/modules/users/controllers.py:1765
+msgid "The action is already in use for this role."
+msgstr "L'action est déjà utilisée pour ce rôle."
+
+#: app/templates/emails/document_expiration.html:101
+msgid "There is a document which will expire soon"
+msgstr "Il y a un document qui va bientôt expirer"
+
+#: app/templates/emails/document_expiration.html:102
+msgid "Days to expire"
+msgstr "Jours à expirer"
+
+#: app/templates/emails/document_expiration.html:103
+msgid "Below you can find the details for the document."
+msgstr "Vous trouverez ci-dessous les détails du document."
+
+#: app/templates/emails/document_expiration.html:104
+msgid "Code"
+msgstr "Code"
+
+#: app/templates/emails/document_expiration.html:108
+msgid "Observations"
+msgstr "Observations"
+
+#: app/templates/emails/document_expiration.html:110
+msgid "Uploaded By"
+msgstr "Telechargé par"
+
+#: app/templates/emails/document_expiration.html:114
+msgid "The document file can be accessed in the link below."
+msgstr "Le fichier du document est accessible dans le lien ci-dessous."
+
+#: app/templates/emails/document_expiration.html:125
+msgid "View Document File"
+msgstr "Afficher le fichier du document"
+
+#: app/templates/emails/document_expiration.html:139
+msgid ""
+"You've received this message because your e-mail address was set to be "
+"notified upon document expiration. If you believe this is a mistake, please "
+"ignore this message."
+msgstr ""
+"Vous avez reçu ce message car votre adresse e-mail a été configurée pour "
+"être notifiée à l'expiration du document. Si vous pensez qu'il s'agit d'une "
+"erreur, veuillez ignorer ce message."
+
+#: app/templates/emails/forgot_password.html:167
+msgid "Forgot your password"
+msgstr "Mot de passe oublié"
+
+#: app/templates/emails/forgot_password.html:175
+#: app/templates/emails/verify_email.html:174
+msgid "Hello"
+msgstr "Bonjour"
+
+#: app/templates/emails/forgot_password.html:176
+msgid "it looks like you forgot your password at"
+msgstr "il semble que vous ayez oublié votre mot de passe à"
+
+#: app/templates/emails/forgot_password.html:177
+msgid "Click the following button to change your account password."
+msgstr ""
+"Cliquez sur le bouton suivant pour modifier le mot de passe de votre compte."
+
+#: app/templates/emails/forgot_password.html:193
+msgid "Change Password"
+msgstr "Changer le mot de passe"
+
+#: app/templates/emails/forgot_password.html:242
+msgid ""
+"You received this email because you've requested a password reset at "
+"OnLibrary. If you believe this is a mistake, please ignore this message -- "
+"the password hasn't been changed yet."
+msgstr ""
+"Vous avez reçu cet e-mail car vous avez demandé une réinitialisation de mot "
+"de passe à OnLibrary. Si vous pensez qu'il s'agit d'une erreur, veuillez "
+"ignorer ce message -- le mot de passe n'a pas encore été modifié."
+
+#: app/templates/emails/verify_email.html:167
+msgid "You're almost there"
+msgstr "Tu y es presque"
+
+#: app/templates/emails/verify_email.html:175
+msgid "thank you for signing up to the"
+msgstr "merci de vous être inscrit au"
+
+#: app/templates/emails/verify_email.html:176
+msgid "Click the following button to verify your email address."
+msgstr "Cliquez sur le bouton suivant pour vérifier votre adresse e-mail."
+
+#: app/templates/emails/verify_email.html:190
+msgid "Verify"
+msgstr "Vérifier"
+
+#: app/templates/emails/verify_email.html:239
+msgid ""
+"You received this email because you've registered a new account at "
+"OnLibrary. If you believe this is a mistake, please ignore this message -- "
+"the account hasn't been activated yet."
+msgstr ""
+"Vous avez reçu cet e-mail car vous avez enregistré un nouveau compte sur "
+"OnLibrary. Si vous pensez qu'il s'agit d'une erreur, veuillez ignorer ce "
+"message : le compte n'a pas encore été activé."
+
+#: app/templates/reports/qr_code_report.html:6
+msgid "QR Code"
+msgstr "QR Code"

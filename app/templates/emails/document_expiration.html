@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!-- Mail template for expiring documents -->
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<style>
+		table {
+			border-spacing: 0;
+			border-collapse: separate;
+		}
+
+		.background-table {
+			background: #f4f4f4;
+		}
+		
+		.content-table {
+			background: #fff;
+			border: 1px solid #e5e5e5;
+		}
+
+		.main-content {
+			padding: 30px;
+			font-family: sans-serif;
+			font-size: 16px;
+			line-height: 20px;
+			color: #666;
+		}
+
+		.subtitle {
+			font-size: 14px;
+		}
+
+		h2 {
+			margin-bottom: 24px;
+		}
+
+		h3 {
+			margin: 0;
+		}
+
+		.link-button {
+			background-color: #14aaf5;
+			border-radius: 4px;
+		}
+
+		.link-button-text {
+			font-size: 12px;
+			font-weight: 600;
+			line-height: 12px;
+			color: #ffffff;
+		}
+
+		.link-content {
+			text-decoration: none;
+			border-radius: 4px;
+			padding: 4px;
+			border: 1px solid #14aaf5;
+			display: inline-block;
+		}
+
+		.footer-class {
+			text-align: center;
+			padding: 20px 0px 5px;
+			font-family: Helvetica, Arial, sans-serif;
+			font-size: 13px;
+			line-height: 28px;
+			color: #888;
+		}
+
+		td.value-data {
+			float: right;
+		}
+	</style>
+</head>
+
+<body>
+	<div>
+		<table height="100%" width="100%" class="background-table">
+			<tr>
+				<td>
+					<table border="0" width="600" cellpadding="0" cellspacing="0" align="center">
+						<tr>
+							<!-- Logo -->
+							<td align="center"><img alt="Logo" src="https://upload.wikimedia.org/wikipedia/commons/8/87/Jinja_software_logo.svg" height="64" /></td>
+						</tr>
+						<tr>
+							<td height="10" style="font-size: 0;line-height: 0;">&nbsp;</td>
+						</tr>
+					</table>
+					<table border="0" width="600" cellpadding="0" cellspacing="0" align="center" class="content-table">
+						<tr>
+							<td style="border-bottom: 1px solid #e5e5e5;">
+								<table border="0" width="100%" cellpadding="0" cellspacing="0" align="center">
+									<tr>
+										<td class="main-content">
+											<table cellpadding="10" style="width: 100%;">
+												<tr>
+													<td colspan="2" style="padding-bottom: 4px;">
+														<h2>{{_('Document Expiration')}} {{file_name}}</h2>
+														<p>{{_('There is a document which will expire soon')}}: ({{expires_at}})</p>
+														<p>{{_('Days to expire')}}: <b>{{days_to_expire}}</b></p>
+														<p>{{_('Below you can find the details for the document.')}}</p>
+														<h4 style="margin: 0px;">{{_('Code')}}</h4>
+														<span class="subtitle">{{code}}</span>
+														<h4 style="margin: 0px;">{{_('Description')}}</h4>
+														<span class="subtitle">{{description}}</span>
+														<h4 style="margin: 0px;">{{_('Observations')}}</h4>
+														<span class="subtitle">{{observations}}</span>
+														<h4 style="margin: 0px;">{{_('Uploaded By')}}</h4>
+														<span class="subtitle">{{user.name}} ({{user.username}})</span>
+														<h4 style="margin: 0px;">{{_('File')}}</h4>
+														<span class="subtitle">{{file_name}} ({{file_content_type}} {{file_size}})</span>
+														<p>{{_('The document file can be accessed in the link below.')}}</p>
+													</td>
+												</tr>
+												<tr>
+													<td>
+														<div style="min-height: 8px;"></div>
+													</td>
+												</tr>
+												<tr>
+													<td colspan="2" align="center" class="link-button">
+														<a href="{{link}}" target="_blank" class="link-content">
+															<span class="link-button-text">{{_('View Document File')}}</span>
+														</a>
+													</td>
+												</tr>
+											</table>
+										</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+					</table>
+					<table border="0" width="100%" cellpadding="0" cellspacing="0" align="center">
+						<tr>
+							<td class="footer-class">
+								<span>{{_("You've received this message because your e-mail address was set to be notified upon document expiration. If you believe this is a mistake, please ignore this message.")}}</span>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<body>
+
+</html>
