@@ -32,6 +32,7 @@ During the development of this project, the following techologies were used:
 - [Gunicorn](https://gunicorn.org/)
 - [Let's Encrypt](https://letsencrypt.org/pt-br/)
 - [FFmpeg](https://ffmpeg.org/)
+- [Docker](https://www.docker.com/)
 
 ## 💻 Project Configuration
 
@@ -81,6 +82,8 @@ Also, in order to install *pyodbc* on Linux, it might be necessary to install *u
 ```bash
 $ sudo apt-get install unixodbc-dev
 ```
+
+**Note**: some Docker images have troubles when installing this dependency. Hence, we're avoiding to use SQL Server when deploying the application with Docker.
 
 ### MySQL Server
 
@@ -191,6 +194,44 @@ $ sudo ln -s /snap/bin/certbot /usr/bin/certbot # Prepares the Certbot command
 $ sudo certbot --nginx -d api.onlibrary.com.br
 ```
 
+## 🐳 Docker
+
+There's also the option to deploy the application using [Docker](https://www.docker.com/). In this case, we have a *Dockerfile* for the Flask Application.
+
+If you want to deploy the application with an already existing database, you just need the Flask Dockerfile, otherwise, you can use the *docker-compose* to deploy the application as well as the database server on your machine.
+
+To build a container image for the Flask application, we can run the following command on the app's root folder:
+
+```bash
+$ docker build -t api-onlibrary .
+```
+
+A few useful Docker commands are listed below:
+
+```bash
+$ docker image ls # Shows available images
+$ docker ps --all # Shows available containers
+$ docker run --name <container-name> -p 8080:8080 -it <image-name> # Runs a container from an image with specified options
+$ docker exec -it <container> bash # Access the Docker container's shell
+```
+
+After starting the container, you should add the environment and credentials files to it, in order for it to work correctly. You can do it with the following commands:
+
+```bash
+$ docker cp ./.env <container>:/app/.env
+$ docker cp ./service-credentials.json <container>:/app/service-credentials.json
+```
+
+If you want to create containers for both the Flask Application and the database server, you can use the following command for the Docker Composer:
+
+```bash
+$ docker compose up
+```
+
+This will first try to pull existing images to create the containers. If they're not available, it'll build the images and then run the conatainers.
+
+Finally, a [Makefile](./Makefile) was created in order to help providing some of the commands listed above in a simple way.
+
 ### Documentation:
 * [Como servir os aplicativos Flask com o Gunicorn e o Nginx no Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-18-04-pt)
 * [Como servir aplicativos Flask com o uWSGI e o Nginx no Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uswgi-and-nginx-on-ubuntu-18-04-pt)
@@ -225,6 +266,14 @@ $ sudo certbot --nginx -d api.onlibrary.com.br
 * [Python - Flask-SocketIO send message from thread: not always working](https://stackoverflow.com/a/49411246)
 * [Firebase Admin Python SDK](https://firebase.google.com/docs/reference/admin/python/)
 * [Firebase cloud messaging and python 3](https://blog.iampato.me/firebase-cloud-messaging-and-python-3)
+* [From inside of a Docker container, how do I connect to the localhost of the machine?](https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach)
+* [Dockerizing Flask with Postgres, Gunicorn, and Nginx](https://testdriven.io/blog/dockerizing-flask-with-postgres-gunicorn-and-nginx/)
+* [docker-flask-uwsgi-nginx-simple](https://github.com/Julian-Nash/docker-flask-uwsgi-nginx-simple)
+* [Install matplotlib In A Docker Container](https://earthly.dev/blog/python-matplotlib-docker/)
+* [A complete guide to using environment variables and files with Docker and Compose](https://towardsdatascience.com/a-complete-guide-to-using-environment-variables-and-files-with-docker-and-compose-4549c21dc6af)
+* [How to Create a MySql Instance with Docker Compose](https://medium.com/@chrischuck35/how-to-create-a-mysql-instance-with-docker-compose-1598f3cc1bee)
+* [How to run a makefile in Windows?](https://stackoverflow.com/questions/2532234/how-to-run-a-makefile-in-windows)
+* [How to get a shell environment variable in a makefile?](https://stackoverflow.com/questions/28890634/how-to-get-a-shell-environment-variable-in-a-makefile)
 
 ## 📄 License
 

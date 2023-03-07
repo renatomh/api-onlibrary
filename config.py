@@ -28,6 +28,8 @@ elif os.environ.get('SQL_DRIVER') == 'mysql':
 elif os.environ.get('SQL_DRIVER') == 'postgresql':
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQL_DRIVER') + '+psycopg2://' + quote(os.environ.get('SQL_USER')) + ':' + quote(os.environ.get(
         'SQL_PASS')) + '@' + os.environ.get('SQL_HOST') + ':' + os.environ.get('SQL_PORT') + '/' + os.environ.get('SQL_DB')
+# Currently, this is not available when running on Docker containers, since there are some troubles when
+# installing pyodbc on the Docker images
 elif os.environ.get('SQL_DRIVER') == 'mssql':
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQL_DRIVER') + '+pyodbc://' + quote(os.environ.get('SQL_USER')) + ':' + quote(os.environ.get(
         'SQL_PASS')) + '@' + os.environ.get('SQL_HOST') + ':' + os.environ.get('SQL_PORT') + '/' + os.environ.get('SQL_DB') + \

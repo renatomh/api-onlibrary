@@ -1,0 +1,61 @@
+# Defining the compose version
+version: '3.9'
+
+# Defining the services to be run
+services:
+  # MySQL server service (can be updated to use another one, like PostgreSQL)
+  db:
+    # Trying to use an already existing image
+    image: mysql:8.0.32-debian
+    restart: always
+    # Defining some environment variables
+    environment:
+      # Password for root access
+      MYSQL_ROOT_PASSWORD: ${SQL_PASS}
+      MYSQL_DATABASE: ${SQL_DB}
+    ports:
+      # <Port exposed> : < MySQL Port running inside container>
+      - '33306:3306'
+    # Opens port 3306 on the container
+    expose:
+      - '3306'
+    # This is where our data will be persisted
+    volumes:
+      - sql-data:/var/lib/mysql
+    # Selecting the network to be used
+    networks:
+      - backend
+
+  # Flask application service
+  api:
+    # Trying to use an already existing image
+    image: api-onlibrary
+    # Building the image if not already present
+    build: .
+    # Defining the command to be run when executing the service
+    command: gunicorn --worker-class eventlet --bind 0.0.0.0:8080 -m 007 wsgi:app --reload
+    # This is where our data will be persisted
+    volumes:
+      - api-data:/app/
+    # Choosing the port in which app will be served on the host
+    ports:
+      - 8080:8080
+    # Selecting the environment file
+    env_file:
+      - ./.env
+    # Selecting the network to be used
+    networks:
+      - backend
+    # Defining the dependencies for the app (in this case, just the db)
+    depends_on:
+      - db
+
+# Defining the networks
+networks:
+  # The presence of these objects is sufficient to define them
+  backend: {}
+
+# Mening the volumes
+volumes:
+  sql-data:
+  api-data:
