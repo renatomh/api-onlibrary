@@ -10,7 +10,7 @@ import wtforms_json
 from wtforms import TextField, RadioField, IntegerField
 
 # Import Form validators
-from wtforms.validators import Required, Email, Optional, Length
+from wtforms.validators import InputRequired, Email, Optional, Length
 from app.modules.utils import DateField
 
 # Initiating JSON for forms
@@ -19,11 +19,11 @@ wtforms_json.init()
 # Define the create document category form (WTForms)
 class CreateDocumentCategoryForm(Form):
     code = TextField('Code', [
-        Required(message='You must provide a code.'),
+        InputRequired(message='You must provide a code.'),
         Length(max=128)
     ])
     name = TextField('Name', [
-        Required(message='You must provide a name.'),
+        InputRequired(message='You must provide a name.'),
         Length(max=256)
     ])
 
@@ -45,7 +45,7 @@ class CreateDocumentForm(Form):
         Length(max=128)
     ])
     description = TextField('Description', [
-        Required(message='You must provide a description.'),
+        InputRequired(message='You must provide a description.'),
         Length(max=256)
     ])
     observations = TextField('Observations', [
@@ -60,7 +60,7 @@ class CreateDocumentForm(Form):
     alert = RadioField('Email Alert',
         choices=[(1, 'Yes'), (0, 'No')],
         validators=[
-            Required('You must inform if an email alert is required: 1 (yes) or 0 (no)')]
+            InputRequired('You must inform if an email alert is InputRequired: 1 (yes) or 0 (no)')]
         )
     days_to_alert = IntegerField('Days to Alert', [Optional()])
     document_category_id = IntegerField('Document Category ID', [
@@ -105,18 +105,18 @@ class CreateDocumentModelForm(Form):
             ('User', 'User'),
         ],
         validators=[
-            Required(message='You must provide a valid model name')
+            InputRequired(message='You must provide a valid model name')
         ]
     )
     model_id = IntegerField('Model ID', [
-        Required(message='You must provide the model ID.')
+        InputRequired(message='You must provide the model ID.')
     ])
     document_id = IntegerField('Document ID', [
-        Required(message='You must provide the document ID.')
+        InputRequired(message='You must provide the document ID.')
     ])
 
 # Define the create document sharing form (WTForms)
 class CreateDocumentSharingForm(Form):
     shared_user_id = IntegerField('Shared User ID', [
-        Required(message='You must provide the shared user ID.')
+        InputRequired(message='You must provide the shared user ID.')
     ])

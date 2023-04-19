@@ -10,7 +10,7 @@ import wtforms_json
 from wtforms import TextField, RadioField, IntegerField
 
 # Import Form validators
-from wtforms.validators import Required, Optional, Length
+from wtforms.validators import InputRequired, Optional, Length
 from app.modules.utils import DateTimeField
 
 # Initiating JSON for forms
@@ -19,11 +19,11 @@ wtforms_json.init()
 # Define the create notificaation form (WTForms)
 class CreateNotificationForm(Form):
     title = TextField('Title', [
-        Required(message='You must provide a title.'),
+        InputRequired(message='You must provide a title.'),
         Length(max=128)
     ])
     description = TextField('Description', [
-        Required(message='You must provide a description.'),
+        InputRequired(message='You must provide a description.'),
         Length(max=1024)
     ])
     web_action = TextField('Web Action', [
@@ -35,7 +35,7 @@ class CreateNotificationForm(Form):
         Length(max=512)
     ])
     user_id = IntegerField('User ID', [
-        Required(message='You must provide the user ID.')
+        InputRequired(message='You must provide the user ID.')
     ])
 
 # Define the update notification form (WTForms)
@@ -62,7 +62,7 @@ class ReadNotificationForm(Form):
     is_read = RadioField('Is Read',
         choices=[(1, 'Read'), (0, 'Unread')],
         validators=[
-        Required(message='You must inform if notification is read: 1 (read) or 0 (unread).')
+        InputRequired(message='You must inform if notification is read: 1 (read) or 0 (unread).')
     ])
     read_at = DateTimeField(
         'Read At',

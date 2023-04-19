@@ -35,8 +35,10 @@ elif os.environ.get('SQL_DRIVER') == 'mssql':
         'SQL_PASS')) + '@' + os.environ.get('SQL_HOST') + ':' + os.environ.get('SQL_PORT') + '/' + os.environ.get('SQL_DB') + \
         '?driver=' + os.environ.get('ODBC_DRIVER')
 DATABASE_CONNECT_OPTIONS = {}
-# Option to try avoiding problemas of connection with SQL server being lost
-SQLALCHEMY_ENGINE_OPTIONS = {'pool_size' : 100, 'pool_recycle' : 280, 'pool_pre_ping': True}
+# Option to try avoiding problems of connection with SQL server being lost
+SQLALCHEMY_ENGINE_OPTIONS = {'pool_recycle': 280, 'pool_pre_ping': True}
+# Pool size option is not available for SQLite
+if os.environ.get('SQL_DRIVER') != 'sqlite': SQLALCHEMY_ENGINE_OPTIONS['pool_size'] = 100
 
 # Available languages for internationalization/localization (i18n, l10n)
 LANGUAGES = {

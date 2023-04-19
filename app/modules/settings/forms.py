@@ -10,7 +10,7 @@ import wtforms_json
 from wtforms import TextField, RadioField, IntegerField, FloatField # BooleanField
 
 # Import Form validators
-from wtforms.validators import Required, Optional, Length
+from wtforms.validators import InputRequired, Optional, Length
 from app.modules.utils import DateField
 
 # Initiating JSON for forms
@@ -19,7 +19,7 @@ wtforms_json.init()
 # Define the create library form (WTForms)
 class CreateLibraryForm(Form):
     name = TextField('Name', [
-        Required(message='You must provide a name.')
+        InputRequired(message='You must provide a name.')
     ])
 
     # Identification Data: email, password, etc.
@@ -39,13 +39,13 @@ class UpdateLibraryForm(Form):
 # Define the create city form (WTForms)
 class CreateCityForm(Form):
     name = TextField('Name', [
-        Required(message='You must provide a name.')
+        InputRequired(message='You must provide a name.')
     ])
     uf = TextField('UF', [
-        Required(message='You must provide a UF.')
+        InputRequired(message='You must provide a UF.')
     ])
     country_id = IntegerField('Country ID', [
-        Required(message='You must provide the country ID.')
+        InputRequired(message='You must provide the country ID.')
     ])
 
 # Define the update city form (WTForms)
@@ -57,10 +57,10 @@ class UpdateCityForm(Form):
 # Define the create country form (WTForms)
 class CreateCountryForm(Form):
     name = TextField('Name', [
-        Required(message='You must provide a name.')
+        InputRequired(message='You must provide a name.')
     ])
     code = TextField('Code', [
-        Required(message='You must provide a code.')
+        InputRequired(message='You must provide a code.')
     ])
 
 # Define the update country form (WTForms)

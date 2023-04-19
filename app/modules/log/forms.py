@@ -10,7 +10,7 @@ import wtforms_json
 from wtforms import TextField, RadioField, IntegerField
 
 # Import Form validators
-from wtforms.validators import Required, Length
+from wtforms.validators import InputRequired, Length
 
 # Initiating JSON for forms
 wtforms_json.init()
@@ -23,13 +23,13 @@ class CreateLogForm(Form):
             ('User', 'User'),
         ],
         validators=[
-            Required(message='You must provide a valid model name')
+            InputRequired(message='You must provide a valid model name')
         ]
     )
     description = TextField('Description', [
-        Required(message='You must provide a description.'),
+        InputRequired(message='You must provide a description.'),
         Length(max=1024)
     ])
     model_id = IntegerField('Model ID', [
-        Required(message='You must provide the model ID.')
+        InputRequired(message='You must provide the model ID.')
     ])
