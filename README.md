@@ -232,6 +232,22 @@ This will first try to pull existing images to create the containers. If they're
 
 Finally, a [Makefile](./Makefile) was created in order to help providing some of the commands listed above in a simple way.
 
+## 🧪 Testing
+
+In order to make sure that the application's main features are working as expected, some tests were created to assert the functionalities.
+
+To allow the execution of the tests, first the required dependencies must be installed:
+
+```bash
+(env) $ pip install -r requirements-test.txt
+```
+
+The tests can then be run:
+
+```bash
+(env) $ pytest # Optionally, you can add options like '-W ignore::DeprecationWarning' to suppress specific warnings or '-o log_cli=true' to show logs outputs
+```
+
 ### Documentation:
 * [Como servir os aplicativos Flask com o Gunicorn e o Nginx no Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-18-04-pt)
 * [Como servir aplicativos Flask com o uWSGI e o Nginx no Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uswgi-and-nginx-on-ubuntu-18-04-pt)
