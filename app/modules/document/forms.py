@@ -84,7 +84,8 @@ class UpdateDocumentForm(Form):
     expires_at = DateField('Expires At', [Optional()])
     alert_email = TextField('Email Address', [
         Email(),
-        Optional()
+        Optional(),
+        Length(max=1024)
     ])
     alert = RadioField('Email Alert',
         choices=[(1, 'Yes'), (0, 'No')],

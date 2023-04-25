@@ -18,7 +18,8 @@ wtforms_json.init()
 # Define the login form (WTForms)
 class LoginForm(Form):
     username = TextField('Email Address/Username', [
-        InputRequired(message='You must provide an email address or username.')
+        InputRequired(message='You must provide an email address or username.'),
+        Length(max=128)
     ])
     password = PasswordField('Password', [
         InputRequired(message='You must provide a password.')
@@ -27,11 +28,13 @@ class LoginForm(Form):
 # Define the register form (WTForms)
 class RegisterForm(Form):
     name = TextField('Name', [
-        InputRequired(message='You must provide a name.')
+        InputRequired(message='You must provide a name.'),
+        Length(max=128)
     ])
     email = TextField('Email Address', [
         Email(),
-        InputRequired(message='You must provide an email address.')
+        InputRequired(message='You must provide an email address.'),
+        Length(max=128)
     ])
     password = PasswordField('Password', [
         EqualTo('password_confirmation', message='Passwords must match'),
@@ -45,7 +48,8 @@ class RegisterForm(Form):
 class ForgotPasswordForm(Form):
     email = TextField('Email Address', [
         Email(),
-        InputRequired(message='You must provide an email address.')
+        InputRequired(message='You must provide an email address.'),
+        Length(max=128)
     ])
 
 # Define the reset password form (WTForms)
@@ -84,10 +88,12 @@ class SetUserFCMTokenForm(Form):
 # Define the create user form (WTForms)
 class CreateUserForm(Form):
     name = TextField('Name', [
-        InputRequired(message='You must provide a name.')
+        InputRequired(message='You must provide a name.'),
+        Length(max=128)
     ])
     username = TextField('Username', [
-        InputRequired(message='You must provide the username')
+        InputRequired(message='You must provide the username'),
+        Length(max=128)
     ])
     password = PasswordField('Password', [
         EqualTo('password_confirmation', message='Passwords must match'),
@@ -106,7 +112,8 @@ class CreateUserForm(Form):
         )
     email = TextField('Email Address', [
         Email(),
-        Optional()
+        Optional(),
+        Length(max=128)
     ])
 
 # Define the user role form (WTForms)
@@ -117,8 +124,14 @@ class UserRoleForm(Form):
 
 # Define the update profile form (WTForms)
 class UpdateProfileForm(Form):
-    name = TextField('Name', [Optional()])
-    username = TextField('Username', [Optional()])
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])
+    username = TextField('Username', [
+        Optional(),
+        Length(max=128)
+    ])
     current_password = PasswordField('Current Password', [Optional()])
     new_password = PasswordField('New Password', [Optional()])
     password_confirmation = PasswordField(
@@ -126,8 +139,14 @@ class UpdateProfileForm(Form):
 
 # Define the update user form (WTForms)
 class UpdateUserForm(Form):
-    name = TextField('Name', [Optional()])
-    username = TextField('Username', [Optional()])
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])
+    username = TextField('Username', [
+        Optional(),
+        Length(max=128)
+    ])
     role_id = IntegerField('Role ID', [Optional()])
     password = PasswordField('New Password', [Optional()])
     password_confirmation = PasswordField(
@@ -136,17 +155,22 @@ class UpdateUserForm(Form):
 # Define the create role form (WTForms)
 class CreateRoleForm(Form):
     name = TextField('Name', [
-        InputRequired(message='You must provide a name.')
+        InputRequired(message='You must provide a name.'),
+        Length(max=128)
     ])
 
 # Define the update role form (WTForms)
 class UpdateRoleForm(Form):
-    name = TextField('Name', [Optional()])
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])
 
 # Define the create role API route form (WTForms)
 class CreateRoleAPIRouteForm(Form):
     route = TextField('Route', [
-        InputRequired(message='You must provide a route.')
+        InputRequired(message='You must provide a route.'),
+        Length(max=512)
     ])
     method = RadioField('Method',
         choices=[
@@ -167,7 +191,8 @@ class CreateRoleAPIRouteForm(Form):
 # Define the create role web action form (WTForms)
 class CreateRoleWebActionForm(Form):
     action = TextField('Action', [
-        InputRequired(message='You must provide an action.')
+        InputRequired(message='You must provide an action.'),
+        Length(max=512)
     ])
     role_id = IntegerField('Role ID', [
         InputRequired(message='You must provide the role ID.')
@@ -176,7 +201,8 @@ class CreateRoleWebActionForm(Form):
 # Define the create role mobile action form (WTForms)
 class CreateRoleMobileActionForm(Form):
     action = TextField('Action', [
-        InputRequired(message='You must provide an action.')
+        InputRequired(message='You must provide an action.'),
+        Length(max=512)
     ])
     role_id = IntegerField('Role ID', [
         InputRequired(message='You must provide the role ID.')
@@ -184,4 +210,7 @@ class CreateRoleMobileActionForm(Form):
 
 # Define the copy role form (WTForms)
 class CopyRoleForm(Form):
-    name = TextField('Name', [Optional()])
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])

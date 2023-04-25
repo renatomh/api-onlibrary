@@ -19,30 +19,48 @@ wtforms_json.init()
 # Define the create library form (WTForms)
 class CreateLibraryForm(Form):
     name = TextField('Name', [
-        InputRequired(message='You must provide a name.')
+        InputRequired(message='You must provide a name.'),
+        Length(max=128)
     ])
 
     # Identification Data: email, password, etc.
-    cnpj = TextField('CNPJ', [Optional()])
-    cpf = TextField('CPF', [Optional()])
+    cnpj = TextField('CNPJ', [
+        Optional(),
+        Length(max=18)
+    ])
+    cpf = TextField('CPF', [
+        Optional(),
+        Length(max=18)
+    ])
     city_id = IntegerField('City ID', [Optional()])
 
 # Define the update library form (WTForms)
 class UpdateLibraryForm(Form):
-    name = TextField('Name', [Optional()])
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])
 
     # Identification Data: email, password, etc.
-    cnpj = TextField('CNPJ', [Optional()])
-    cpf = TextField('CPF', [Optional()])
+    cnpj = TextField('CNPJ', [
+        Optional(),
+        Length(max=18)
+    ])
+    cpf = TextField('CPF', [
+        Optional(),
+        Length(max=18)
+    ])
     city_id = IntegerField('City ID', [Optional()])
 
 # Define the create city form (WTForms)
 class CreateCityForm(Form):
     name = TextField('Name', [
-        InputRequired(message='You must provide a name.')
+        InputRequired(message='You must provide a name.'),
+        Length(max=128)
     ])
     uf = TextField('UF', [
-        InputRequired(message='You must provide a UF.')
+        InputRequired(message='You must provide a UF.'),
+        Length(max=16)
     ])
     country_id = IntegerField('Country ID', [
         InputRequired(message='You must provide the country ID.')
@@ -50,20 +68,34 @@ class CreateCityForm(Form):
 
 # Define the update city form (WTForms)
 class UpdateCityForm(Form):
-    name = TextField('Name', [Optional()])
-    uf = TextField('UF', [Optional()])
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])
+    uf = TextField('UF', [
+        Optional(),
+        Length(max=16)
+    ])
     country_id = IntegerField('Coutry ID', [Optional()])
 
 # Define the create country form (WTForms)
 class CreateCountryForm(Form):
     name = TextField('Name', [
-        InputRequired(message='You must provide a name.')
+        InputRequired(message='You must provide a name.'),
+        Length(max=128)
     ])
     code = TextField('Code', [
-        InputRequired(message='You must provide a code.')
+        InputRequired(message='You must provide a code.'),
+        Length(max=8)
     ])
 
 # Define the update country form (WTForms)
 class UpdateCountryForm(Form):
-    name = TextField('Name', [Optional()])
-    code = TextField('Code', [Optional()])
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])
+    code = TextField('Code', [
+        Optional(),
+        Length(max=8)
+    ])
