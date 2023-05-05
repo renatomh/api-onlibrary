@@ -274,6 +274,7 @@ from app.modules.log.controllers import *
 from app.modules.document.controllers import *
 from app.modules.notification.controllers import *
 from app.modules.settings.controllers import *
+from app.modules.books.controllers import *
 
 # Register blueprint(s)
 # Users modules
@@ -286,6 +287,8 @@ app.register_blueprint(mod_role_web_action)
 app.register_blueprint(mod_role_mobile_action)
 # Notification modules
 app.register_blueprint(mod_notification)
+# Books modules
+app.register_blueprint(mod_author)
 # Settings modules
 app.register_blueprint(mod_library)
 app.register_blueprint(mod_city)

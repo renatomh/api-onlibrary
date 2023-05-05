@@ -106,6 +106,7 @@ class Country(Base):
 
     # Relationships
     city = db.relationship('City', lazy="select", backref='country')
+    author = db.relationship('Author', lazy="select", backref='country')
 
     # New instance instantiation procedure
     def __init__(self, name, code=None):

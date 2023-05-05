@@ -29,6 +29,7 @@ from app.modules.settings.forms import *
 
 # Import module models
 from app.modules.settings.models import *
+from app.modules.books.models import *
 
 # Utilities functions
 from app.modules.utils import get_sort_attrs, get_join_attrs, \
@@ -112,7 +113,7 @@ def create_library():
                                     "meta": {"success": False,
                                             "errors": _("This name is already in use.")}}), 400
                 try:
-                    # Checking if country exists
+                    # Checking if city exists
                     if form.city_id.data and session.query(City).get(form.city_id.data) is None:
                         return jsonify({"data": [],
                                         "meta": {"success": False,
@@ -199,6 +200,11 @@ def update_library(id):
                         if form.cpf.data is not None:
                             item.cpf=form.cpf.data
                         if form.city_id.data is not None:
+                            # Checking if city exists
+                            if form.city_id.data and session.query(City).get(form.city_id.data) is None:
+                                return jsonify({"data": [],
+                                                "meta": {"success": False,
+                                                        "errors": _("No city found")}}), 400
                             item.city_id=form.city_id.data
                         try:
                             session.commit()
@@ -661,6 +667,12 @@ def delete_country(id):
 
             # If the item is found
             if item:
+                # Checking if there are relationships defined for the item
+                if City.query.filter(City.country_id==id).first() is not None or \
+                    Author.query.filter(Author.country_id==id).first() is not None:
+                    return jsonify({"data": [],
+                                    "meta": {"success": False,
+                                            "errors": _("There are other items associated with this item")}}), 400
                 try:
                     session.delete(item)
                     session.commit()

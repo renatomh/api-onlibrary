@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-02-09 13:15-0300\n"
+"POT-Creation-Date: 2023-05-05 18:29-0300\n"
 "PO-Revision-Date: 2023-02-08 15:44-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
@@ -109,13 +109,21 @@ msgstr "Pas une valeur de date valide"
 msgid "Not a valid time value"
 msgstr "Pas une valeur de temps valide"
 
-#: app/modules/document/controllers.py:137
-#: app/modules/document/controllers.py:216
-#: app/modules/document/controllers.py:535
-#: app/modules/document/controllers.py:689
-msgid "This code is already in use."
-msgstr "Ce code est déjà utilisé."
+#: app/modules/books/controllers.py:125
+#: app/modules/settings/controllers.py:114
+#: app/modules/settings/controllers.py:195
+#: app/modules/settings/controllers.py:550
+#: app/modules/settings/controllers.py:620
+msgid "This name is already in use."
+msgstr "Ce nom est déjà utilisé."
 
+#: app/modules/books/controllers.py:131 app/modules/books/controllers.py:212
+#: app/modules/settings/controllers.py:343
+msgid "No country found"
+msgstr "Aucun pays trouvé"
+
+#: app/modules/books/controllers.py:183 app/modules/books/controllers.py:230
+#: app/modules/books/controllers.py:338 app/modules/books/controllers.py:370
 #: app/modules/document/controllers.py:186
 #: app/modules/document/controllers.py:248
 #: app/modules/document/controllers.py:299
@@ -132,15 +140,15 @@ msgstr "Ce code est déjà utilisé."
 #: app/modules/notification/controllers.py:356
 #: app/modules/notification/controllers.py:402
 #: app/modules/notification/controllers.py:439
-#: app/modules/settings/controllers.py:169
-#: app/modules/settings/controllers.py:219
-#: app/modules/settings/controllers.py:263
-#: app/modules/settings/controllers.py:386
-#: app/modules/settings/controllers.py:427
-#: app/modules/settings/controllers.py:471
-#: app/modules/settings/controllers.py:589
-#: app/modules/settings/controllers.py:635
-#: app/modules/settings/controllers.py:679
+#: app/modules/settings/controllers.py:170
+#: app/modules/settings/controllers.py:225
+#: app/modules/settings/controllers.py:269
+#: app/modules/settings/controllers.py:392
+#: app/modules/settings/controllers.py:433
+#: app/modules/settings/controllers.py:477
+#: app/modules/settings/controllers.py:595
+#: app/modules/settings/controllers.py:641
+#: app/modules/settings/controllers.py:691
 #: app/modules/users/controllers.py:218 app/modules/users/controllers.py:264
 #: app/modules/users/controllers.py:775 app/modules/users/controllers.py:1489
 #: app/modules/users/controllers.py:1519 app/modules/users/controllers.py:1652
@@ -149,6 +157,24 @@ msgstr "Ce code est déjà utilisé."
 msgid "No item found"
 msgstr "Aucun élément trouvé"
 
+#: app/modules/books/controllers.py:266
+#: app/modules/document/controllers.py:503
+msgid "File not sent"
+msgstr "Fichier non envoyé"
+
+#: app/modules/books/controllers.py:275
+#: app/modules/document/controllers.py:512
+#: app/modules/users/controllers.py:995
+msgid "File extension not allowed"
+msgstr "Extension de fichier non autorisée"
+
+#: app/modules/document/controllers.py:137
+#: app/modules/document/controllers.py:216
+#: app/modules/document/controllers.py:535
+#: app/modules/document/controllers.py:689
+msgid "This code is already in use."
+msgstr "Ce code est déjà utilisé."
+
 #: app/modules/document/controllers.py:225
 #: app/modules/document/controllers.py:281
 #: app/modules/document/controllers.py:549
@@ -156,15 +182,6 @@ msgstr "Aucun élément trouvé"
 #: app/modules/document/controllers.py:781
 msgid "Item library not allowed for user"
 msgstr "Bibliothèque d'éléments non autorisée pour l'utilisateur"
-
-#: app/modules/document/controllers.py:503
-msgid "File not sent"
-msgstr "Fichier non envoyé"
-
-#: app/modules/document/controllers.py:512
-#: app/modules/users/controllers.py:995
-msgid "File extension not allowed"
-msgstr "Extension de fichier non autorisée"
 
 #: app/modules/document/controllers.py:544
 #: app/modules/document/controllers.py:706
@@ -274,20 +291,14 @@ msgstr "La date de lecture ne peut pas être dans le futur."
 msgid "Only the notified user can delete this notification"
 msgstr "Seul l'utilisateur notifié peut supprimer cette notification"
 
-#: app/modules/settings/controllers.py:113
-#: app/modules/settings/controllers.py:194
-#: app/modules/settings/controllers.py:544
-#: app/modules/settings/controllers.py:614
-msgid "This name is already in use."
-msgstr "Ce nom est déjà utilisé."
-
-#: app/modules/settings/controllers.py:119
+#: app/modules/settings/controllers.py:120
+#: app/modules/settings/controllers.py:207
 msgid "No city found"
 msgstr "Aucune ville trouvée"
 
-#: app/modules/settings/controllers.py:337
-msgid "No country found"
-msgstr "Aucun pays trouvé"
+#: app/modules/settings/controllers.py:675
+msgid "There are other items associated with this item"
+msgstr "Il y a d'autres articles associés à cet article"
 
 #: app/modules/users/controllers.py:99
 msgid "Account not active. Please contact the system admin."
