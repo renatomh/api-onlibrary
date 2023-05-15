@@ -10,6 +10,7 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import make_msgid
 
 # Module for AWS
 import boto3
@@ -29,6 +30,8 @@ if os.environ.get('MAIL_DRIVER') == 'smtp':
         message = MIMEMultipart()
         message["From"] = _from
         message["Subject"] = subject
+        # We should add the message ID, since some hosts require it
+        message['Message-ID'] = make_msgid()
 
         # Defining the recipients
         # If a list was provided
