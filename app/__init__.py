@@ -290,6 +290,7 @@ app.register_blueprint(mod_notification)
 # Books modules
 app.register_blueprint(mod_author)
 app.register_blueprint(mod_publisher)
+app.register_blueprint(mod_genre)
 # Settings modules
 app.register_blueprint(mod_library)
 app.register_blueprint(mod_city)

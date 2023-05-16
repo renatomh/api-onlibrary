@@ -134,3 +134,31 @@ class Publisher(Base):
             if 'app' in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
         return data
+
+# Define a genre model using Base columns
+class Genre(Base):
+    __tablename__ = 'genre'
+
+    # Basic data
+    name = db.Column(db.String(128), nullable=False, unique=True)
+
+    # Relationships
+    # model_name = db.relationship('ModelName', lazy='select', backref='genre')
+
+    # New instance instantiation procedure
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return '<Genre %r>' % (self.name)
+
+    # Returning data as dict
+    def as_dict(self, timezone=tz):
+        # We also remove the password
+        data = {c.name: default_object_string(getattr(self, c.name), timezone)
+                for c in self.__table__.columns}
+        # Adding the related tables
+        for c in self.__dict__:
+            if 'app' in str(type(self.__dict__[c])):
+                data[c] = self.__dict__[c].as_dict(timezone)
+        return data

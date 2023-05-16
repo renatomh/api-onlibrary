@@ -75,3 +75,17 @@ class UpdatePublisherForm(Form):
         Length(max=256)
     ])
     country_id = IntegerField('Country ID', [Optional()])
+
+# Define the create genre form (WTForms)
+class CreateGenreForm(Form):
+    name = TextField('Name', [
+        InputRequired(message='You must provide a name.'),
+        Length(max=128)
+    ])
+
+# Define the update genre form (WTForms)
+class UpdateGenreForm(Form):
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])

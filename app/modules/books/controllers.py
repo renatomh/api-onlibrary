@@ -51,6 +51,7 @@ from app.modules.utils import get_sort_attrs, get_join_attrs, \
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
 mod_author = Blueprint('authors', __name__, url_prefix='/authors')
 mod_publisher = Blueprint('publishers', __name__, url_prefix='/publishers')
+mod_genre = Blueprint('genres', __name__, url_prefix='/genres')
 
 # Set the route and accepted methods
 @mod_author.route('', methods=['GET'])
@@ -574,6 +575,215 @@ def delete_publisher(id):
         with AppSession() as session:
             # Searching item by ID
             item = session.query(Publisher).filter_by(id=id).first()
+
+            # If the item is found
+            if item:
+                # Checking if there are relationships defined for the item
+                # TODO: check for associated items
+                try:
+                    session.delete(item)
+                    session.commit()
+                    return jsonify({"data": '',
+                                    "meta": {"success": True}}), 204
+                # If an error occurrs
+                except Exception as e:
+                    session.rollback()
+                    return jsonify({"data": [],
+                                    "meta": {"success": False,
+                                            "errors": str(e)}}), 500
+
+            # If no item is found
+            return jsonify({"data": [],
+                                "meta": {"success": False,
+                                        "errors": _("No item found")}}), 400
+
+# Set the route and accepted methods
+@mod_genre.route('', methods=['GET'])
+@ensure_authenticated
+def index_genre():
+    # For GET method
+    if request.method == 'GET':
+        # Pagination
+        page = request.args.get('page', default=1, type=int)
+        limit = request.args.get('limit', default=25, type=int)
+        # Setting up a maximum number of results per page, even if limit exceeds it
+        max_per_page = 250
+        # Filtering and sorting
+        filter = request.args.get('filter', default='[]', type=str)
+        sort = request.args.get('sort', default='[]', type=str)
+        # Query timezone
+        timezone = request.args.get('timezone', default=os.getenv('TZ', 'UTC'), type=str)
+        try: q_tz = pytz.timezone(timezone)
+        except: q_tz = pytz.timezone(os.getenv('TZ', 'UTC'))
+
+        # Defining the class for the data model, must be updated for different models
+        model = Genre
+
+        # Trying to obtain data from models
+        try:
+            # Retrieving the sorting attributes
+            sort_attrs = get_sort_attrs(model, sort)
+            # Retrieving the join relationship models
+            join_attrs = get_join_attrs(model, filter)
+            # Retrieving the filtering attributes
+            filter_attrs = get_filter_attrs(model, filter, q_tz)
+
+            # Searching itens by filters and sorting
+            if (len(join_attrs) > 0):
+                # If joins are required
+                res = model.query.join(*join_attrs).filter(
+                    *filter_attrs).order_by(*sort_attrs).paginate(page, limit, False, max_per_page)
+            else:
+                # If joins are not required
+                res = model.query.filter(*filter_attrs).order_by(
+                    *sort_attrs).paginate(page, limit, False, max_per_page)
+            data = [r.as_dict(q_tz)
+                    for r in res.items] if len(res.items) > 0 else []
+
+            # Returning data and meta
+            return jsonify({"data": data,
+                            "meta": {"success": True,
+                                     "count": res.total}})
+        # If something goes wrong
+        except Exception as e:
+            return jsonify({"data": {},
+                            "meta": {"success": False,
+                                     "errors": str(e)}}), 500
+
+# Set the route and accepted methods
+@mod_genre.route('', methods=['POST'])
+@ensure_authorized
+def create_genre():
+    # For POST method
+    if request.method == 'POST':
+        # Creating the session for database communication
+        with AppSession() as session:
+            # If data form is submitted
+            form = CreateGenreForm.from_json(request.json)
+
+            # Validating provided data
+            if form.validate():
+                # Checking if field is already in use
+                if session.query(Genre).filter_by(name=form.name.data).first():
+                    return jsonify({"data": [],
+                                    "meta": {"success": False,
+                                            "errors": _("This name is already in use.")}}), 400
+                try:
+                    # Creating new item
+                    item = Genre(
+                        name=form.name.data,
+                        )
+                    session.add(item)
+                    session.flush()
+                    session.commit()
+                    return jsonify({"data": item.as_dict(),
+                                    "meta": {"success": True}})
+                # If an error occurrs
+                except Exception as e:
+                    session.rollback()
+                    return jsonify({"data": [],
+                                    "meta": {"success": False,
+                                            "errors": str(e)}}), 500
+            
+            # If something goes wrong
+            else:
+                # Returning the data to the request
+                return jsonify({"data": [],
+                                "meta": {"success": False,
+                                        "errors": form.errors}}), 400
+
+# Set the route and accepted methods
+@mod_genre.route('/<int:id>', methods=['GET'])
+@ensure_authenticated
+def get_genre_by_id(id):
+    # For GET method
+    if request.method == 'GET':
+        # Creating the session for database communication
+        with AppSession() as session:
+            # Getting the model
+            model = Genre
+
+            # Searching item by ID
+            item = session.query(model).get(id)
+
+            # If item is found
+            if item:
+                return jsonify({"data": item.as_dict(),
+                                "meta": {"success": True}})
+            
+            # If no item is found
+            return jsonify({"data": [],
+                                "meta": {"success": False,
+                                        "errors": _("No item found")}}), 400
+
+# Set the route and accepted methods
+@mod_genre.route('/<int:id>', methods=['PUT'])
+@ensure_authorized
+def update_genre(id):
+    # For PUT method
+    if request.method == 'PUT':
+        # Creating the session for database communication
+        with AppSession() as session:
+            # If data form is submitted
+            form = UpdateGenreForm.from_json(request.json)
+
+            # Validating provided data
+            if form.validate():
+                try:
+                    # Updating the item
+                    item = session.query(Genre).get(id)
+                    if item:
+                        if form.name.data is not None:
+                            if form.name.data != item.name:
+                                # Checking if field is not already in use
+                                if session.query(Genre).filter_by(name=form.name.data).first():
+                                    return jsonify({"data": [],
+                                        "meta": {"success": False,
+                                                "errors": _("This name is already in use.")}}), 400
+                                else:
+                                    item.name=form.name.data
+                        try:
+                            session.commit()
+                            return jsonify({"data": item.as_dict(),
+                                            "meta": {"success": True}})
+
+                        # If something goes wrong while committing
+                        except Exception as e:
+                            session.rollback()
+                            # Returning the data to the request
+                            return jsonify({"data": [],
+                                            "meta": {"success": False,
+                                                    "errors": str(e)}}), 500
+
+                    # If no item is found
+                    return jsonify({"data": [],
+                                    "meta": {"success": False,
+                                            "errors": _("No item found")}}), 400
+
+                # If an error occurrs
+                except Exception as e:
+                    session.rollback()
+                    return jsonify({"data": [],
+                                    "meta": {"success": False,
+                                            "errors": str(e)}}), 500
+
+            # If something goes wrong
+            else:
+                # Returning the data to the request
+                return jsonify({"data": [],
+                                "meta": {"success": False,
+                                        "errors": form.errors}}), 400
+
+# Set the route and accepted methods
+@mod_genre.route('/<int:id>', methods=['DELETE'])
+@ensure_authorized
+def delete_genre(id):
+    # For DELETE method
+    if request.method == 'DELETE':
+        # Creating the session for database communication
+        with AppSession() as session:
+            # Searching item by ID
+            item = session.query(Genre).filter_by(id=id).first()
 
             # If the item is found
             if item:
