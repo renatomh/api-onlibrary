@@ -100,3 +100,37 @@ class Author(Base):
             if 'app' in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
         return data
+
+# Define a publisher model using Base columns
+class Publisher(Base):
+    __tablename__ = 'publisher'
+
+    # Basic data
+    name = db.Column(db.String(128), nullable=False, unique=True)
+    description = db.Column(db.String(256), nullable=True)
+
+    # Relationship fileds
+    country_id = db.Column(db.Integer, db.ForeignKey('country.id'), nullable=True)
+    
+    # Relationships
+    # model_name = db.relationship('ModelName', lazy='select', backref='publisher')
+
+    # New instance instantiation procedure
+    def __init__(self, name, description=None, country_id=None):
+        self.name = name
+        self.description = description
+        self.country_id = country_id
+
+    def __repr__(self):
+        return '<Publisher %r>' % (self.name)
+
+    # Returning data as dict
+    def as_dict(self, timezone=tz):
+        # We also remove the password
+        data = {c.name: default_object_string(getattr(self, c.name), timezone)
+                for c in self.__table__.columns}
+        # Adding the related tables
+        for c in self.__dict__:
+            if 'app' in str(type(self.__dict__[c])):
+                data[c] = self.__dict__[c].as_dict(timezone)
+        return data

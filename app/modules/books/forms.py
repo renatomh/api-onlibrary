@@ -38,7 +38,7 @@ class CreateAuthorForm(Form):
 class UpdateAuthorForm(Form):
     name = TextField('Name', [
         Optional(),
-        Length(max=128)
+        Length(max=256)
     ])
     birth_date = DateField('Birth Date', [Optional()])
     death_date = DateField('Death Date', [Optional()])
@@ -49,5 +49,29 @@ class UpdateAuthorForm(Form):
     external_photo_url = TextField('External Photo URL', [
         Optional(),
         Length(max=1024)
+    ])
+    country_id = IntegerField('Country ID', [Optional()])
+
+# Define the create publisher form (WTForms)
+class CreatePublisherForm(Form):
+    name = TextField('Name', [
+        InputRequired(message='You must provide a name.'),
+        Length(max=128)
+    ])
+    description = TextField('Description', [
+        Optional(),
+        Length(max=256)
+    ])
+    country_id = IntegerField('Country ID', [Optional()])
+
+# Define the update publisher form (WTForms)
+class UpdatePublisherForm(Form):
+    name = TextField('Name', [
+        Optional(),
+        Length(max=128)
+    ])
+    description = TextField('Description', [
+        Optional(),
+        Length(max=256)
     ])
     country_id = IntegerField('Country ID', [Optional()])

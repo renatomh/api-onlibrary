@@ -669,7 +669,8 @@ def delete_country(id):
             if item:
                 # Checking if there are relationships defined for the item
                 if City.query.filter(City.country_id==id).first() is not None or \
-                    Author.query.filter(Author.country_id==id).first() is not None:
+                    Author.query.filter(Author.country_id==id).first() is not None or \
+                    Publisher.query.filter(Publisher.country_id==id).first() is not None:
                     return jsonify({"data": [],
                                     "meta": {"success": False,
                                             "errors": _("There are other items associated with this item")}}), 400
