@@ -151,7 +151,7 @@ def login():
                                 "meta": {"success": False,
                                         "errors": form.errors}}), 400
 
-# Socket.IO eevent listener for when client set user's SID
+# Socket.IO event listener for when client set user's SID
 @socketio.on("set-user-token")
 def set_user_token(data):
     # Info about data sent
@@ -242,6 +242,52 @@ def set_own_user_fcm_token():
                 if item:
                     # Setting the new FCM token for the user
                     item.fcm_token=form.fcm_token.data
+
+                    try:
+                        session.commit()
+                        # Getting model and relationships data
+                        data = item.as_dict()
+                        data['role'] = item.role.as_dict() if item.role else None
+                        return jsonify({"data": data,
+                                        "meta": {"success": True}})
+
+                    # If an error occurrs
+                    except Exception as e:
+                        session.rollback()
+                        return jsonify({"data": [],
+                                        "meta": {"success": False,
+                                                "errors": str(e)}}), 500
+
+                # If no item is found
+                return jsonify({"data": [],
+                                "meta": {"success": False,
+                                        "errors": _("No item found")}}), 404
+
+            # If something goes wrong
+            else:
+                # Returning the data to the request
+                return jsonify({"data": [],
+                                "meta": {"success": False,
+                                        "errors": form.errors}}), 400
+
+# Set the route and accepted methods
+@mod_user.route('/my/sid', methods=['PATCH'])
+@ensure_authenticated
+def set_own_user_sid():
+    # For PATCH method
+    if request.method == 'PATCH':
+        # Creating the session for database communication
+        with AppSession() as session:
+            # If data form is submitted
+            form = SetUserSIDForm.from_json(request.json)
+
+            # Validating provided data
+            if form.validate():
+                # Updating the item
+                item = session.query(User).get(g.user.id)
+                if item:
+                    # Setting the new FCM token for the user
+                    item.socketio_sid=form.socketio_sid.data
 
                     try:
                         session.commit()

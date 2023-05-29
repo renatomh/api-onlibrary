@@ -85,6 +85,13 @@ class SetUserFCMTokenForm(Form):
         Length(max=512)
     ])
 
+# Define the set user SocketIO SID form (WTForms)
+class SetUserSIDForm(Form):
+    socketio_sid = TextField('SocketIO SID', [
+        InputRequired(message='You must provide the SocketIO SID.'),
+        Length(max=512)
+    ])
+
 # Define the create user form (WTForms)
 class CreateUserForm(Form):
     name = TextField('Name', [
