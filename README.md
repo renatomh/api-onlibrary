@@ -87,7 +87,7 @@ $ sudo apt-get install unixodbc-dev
 
 ### MySQL Server
 
-When using the Microsoft SQL Server, it is required to choose a default charset which won't conflict with some models fields data length. The 'utf8/utf8_general_ci' should work.
+When using the MySQL Server, it is required to choose a default charset which won't conflict with some models fields data length. The 'utf8/utf8_general_ci' should work.
 
 ### FFmpeg
 
