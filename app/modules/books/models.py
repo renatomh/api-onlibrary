@@ -145,6 +145,9 @@ class Genre(Base):
     name = db.Column(db.String(128), nullable=False, unique=True)
 
     # Relationships
+    # We'll cascade delete the child items when removing the parent item
+    # Note: this won't set the database meta "ON DELETE" and "ON UPDATE" features
+    book_genre = db.relationship('BookGenre', lazy='select', backref='genre', cascade="all, delete")
     # model_name = db.relationship('ModelName', lazy='select', backref='genre')
 
     # New instance instantiation procedure
@@ -197,6 +200,9 @@ class Book(Base):
     publisher_id = db.Column(db.Integer, db.ForeignKey('publisher.id'), nullable=True)
     
     # Relationships
+    # We'll cascade delete the child items when removing the parent item
+    # Note: this won't set the database meta "ON DELETE" and "ON UPDATE" features
+    book_genre = db.relationship('BookGenre', lazy='select', backref='book', cascade="all, delete")
     # model_name = db.relationship('ModelName', lazy='select', backref='book')
 
     # New instance instantiation procedure
@@ -247,6 +253,36 @@ class Book(Base):
                 for c in self.__table__.columns}
         data['photo_url'] = self.full_photo_url()
         data['photo_thumbnail_url'] = self.full_photo_thumbnail_url()
+        # Adding the related tables
+        for c in self.__dict__:
+            if 'app' in str(type(self.__dict__[c])):
+                data[c] = self.__dict__[c].as_dict(timezone)
+        return data
+
+# Define a book genre model using Base columns
+class BookGenre(Base):
+    __tablename__ = 'book_genre'
+
+    # Relationship fields
+    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=True)
+    genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'), nullable=False)
+    
+    # Relationships
+    # model_name = db.relationship('ModelName', lazy='select', backref='book_genre')
+
+    # New instance instantiation procedure
+    def __init__(self, book_id, genre_id):
+        self.book_id = book_id
+        self.genre_id = genre_id
+
+    def __repr__(self):
+        return '<BookGenre %r>' % (self.id)
+
+    # Returning data as dict
+    def as_dict(self, timezone=tz):
+        # We also remove the password
+        data = {c.name: default_object_string(getattr(self, c.name), timezone)
+                for c in self.__table__.columns}
         # Adding the related tables
         for c in self.__dict__:
             if 'app' in str(type(self.__dict__[c])):

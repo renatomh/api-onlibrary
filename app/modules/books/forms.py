@@ -165,3 +165,17 @@ class UpdateBookForm(Form):
     country_id = IntegerField('Country ID', [Optional()])
     author_id = IntegerField('Author ID', [Optional()])
     publisher_id = IntegerField('Publisher ID', [Optional()])
+
+# Define the create book genre form (WTForms)
+class CreateBookGenreForm(Form):
+    book_id = IntegerField('Book ID', [
+        InputRequired(message='You must provide the book ID.'),
+    ])
+    genre_id = IntegerField('Genre ID', [
+        InputRequired(message='You must provide the genre ID.'),
+    ])
+
+# Define the update book genre form (WTForms)
+class UpdateBookGenreForm(Form):
+    book_id = IntegerField('Book ID', [Optional()])
+    genre_id = IntegerField('Genre ID', [Optional()])

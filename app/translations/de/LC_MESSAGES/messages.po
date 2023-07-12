@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-07-12 15:38-0300\n"
+"POT-Creation-Date: 2023-07-12 16:35-0300\n"
 "PO-Revision-Date: 2023-02-08 15:44-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
@@ -108,9 +108,9 @@ msgstr "Kein gültiger Datumswert"
 msgid "Not a valid time value"
 msgstr "Kein gültiger Zeitwert"
 
-#: app/modules/books/controllers.py:128 app/modules/books/controllers.py:454
-#: app/modules/books/controllers.py:534 app/modules/books/controllers.py:679
-#: app/modules/books/controllers.py:751
+#: app/modules/books/controllers.py:129 app/modules/books/controllers.py:455
+#: app/modules/books/controllers.py:535 app/modules/books/controllers.py:683
+#: app/modules/books/controllers.py:755
 #: app/modules/settings/controllers.py:114
 #: app/modules/settings/controllers.py:195
 #: app/modules/settings/controllers.py:550
@@ -118,20 +118,22 @@ msgstr "Kein gültiger Zeitwert"
 msgid "This name is already in use."
 msgstr "Dieser Name wird bereits verwendet."
 
-#: app/modules/books/controllers.py:134 app/modules/books/controllers.py:215
-#: app/modules/books/controllers.py:460 app/modules/books/controllers.py:543
-#: app/modules/books/controllers.py:895 app/modules/books/controllers.py:1007
+#: app/modules/books/controllers.py:135 app/modules/books/controllers.py:216
+#: app/modules/books/controllers.py:461 app/modules/books/controllers.py:544
+#: app/modules/books/controllers.py:899 app/modules/books/controllers.py:1011
 #: app/modules/settings/controllers.py:343
 msgid "No country found"
 msgstr "Kein Land gefunden"
 
-#: app/modules/books/controllers.py:186 app/modules/books/controllers.py:233
-#: app/modules/books/controllers.py:341 app/modules/books/controllers.py:381
-#: app/modules/books/controllers.py:509 app/modules/books/controllers.py:561
-#: app/modules/books/controllers.py:607 app/modules/books/controllers.py:726
-#: app/modules/books/controllers.py:770 app/modules/books/controllers.py:816
-#: app/modules/books/controllers.py:959 app/modules/books/controllers.py:1033
-#: app/modules/books/controllers.py:1134 app/modules/books/controllers.py:1171
+#: app/modules/books/controllers.py:187 app/modules/books/controllers.py:234
+#: app/modules/books/controllers.py:342 app/modules/books/controllers.py:382
+#: app/modules/books/controllers.py:510 app/modules/books/controllers.py:562
+#: app/modules/books/controllers.py:611 app/modules/books/controllers.py:730
+#: app/modules/books/controllers.py:774 app/modules/books/controllers.py:820
+#: app/modules/books/controllers.py:963 app/modules/books/controllers.py:1037
+#: app/modules/books/controllers.py:1138 app/modules/books/controllers.py:1175
+#: app/modules/books/controllers.py:1305 app/modules/books/controllers.py:1333
+#: app/modules/books/controllers.py:1415
 #: app/modules/document/controllers.py:186
 #: app/modules/document/controllers.py:248
 #: app/modules/document/controllers.py:299
@@ -165,29 +167,41 @@ msgstr "Kein Land gefunden"
 msgid "No item found"
 msgstr "Kein Artikel gefunden"
 
-#: app/modules/books/controllers.py:269 app/modules/books/controllers.py:1062
+#: app/modules/books/controllers.py:270 app/modules/books/controllers.py:1066
 #: app/modules/document/controllers.py:503
 msgid "File not sent"
 msgstr "Datei nicht gesendet"
 
-#: app/modules/books/controllers.py:278 app/modules/books/controllers.py:1071
+#: app/modules/books/controllers.py:279 app/modules/books/controllers.py:1075
 #: app/modules/document/controllers.py:512
 #: app/modules/users/controllers.py:1041
 msgid "File extension not allowed"
 msgstr "Dateierweiterung nicht zulässig"
 
-#: app/modules/books/controllers.py:360
+#: app/modules/books/controllers.py:361 app/modules/books/controllers.py:595
 #: app/modules/settings/controllers.py:676
 msgid "There are other items associated with this item"
 msgstr "Diesem Artikel sind weitere Artikel zugeordnet"
 
-#: app/modules/books/controllers.py:890 app/modules/books/controllers.py:999
+#: app/modules/books/controllers.py:894 app/modules/books/controllers.py:1003
 msgid "No author found"
 msgstr "Kein Autor gefunden"
 
-#: app/modules/books/controllers.py:900 app/modules/books/controllers.py:1015
+#: app/modules/books/controllers.py:904 app/modules/books/controllers.py:1019
 msgid "No publisher found"
 msgstr "Kein Verlag gefunden"
+
+#: app/modules/books/controllers.py:1253 app/modules/books/controllers.py:1349
+msgid "This genre is already in use for this book."
+msgstr "Dieses Genre wird für dieses Buch bereits verwendet."
+
+#: app/modules/books/controllers.py:1259 app/modules/books/controllers.py:1355
+msgid "No book found"
+msgstr "Kein Buch gefunden"
+
+#: app/modules/books/controllers.py:1264 app/modules/books/controllers.py:1360
+msgid "No genre found"
+msgstr "Kein Genre gefunden"
 
 #: app/modules/document/controllers.py:137
 #: app/modules/document/controllers.py:216
