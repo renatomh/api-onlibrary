@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-05-05 18:29-0300\n"
+"POT-Creation-Date: 2023-07-12 15:38-0300\n"
 "PO-Revision-Date: 2023-02-08 15:44-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
@@ -96,19 +96,21 @@ msgstr ""
 "Autorisation fehlgeschlagen. Bitte verwenden Sie ein Konto mit den richtigen"
 " Zugriffsrechten."
 
-#: app/modules/utils.py:311 app/modules/utils.py:320
+#: app/modules/utils.py:312 app/modules/utils.py:321
 msgid "Not a valid datetime value"
 msgstr "Kein gültiger datetime-Wert"
 
-#: app/modules/utils.py:336 app/modules/utils.py:341
+#: app/modules/utils.py:337 app/modules/utils.py:342
 msgid "Not a valid date value"
 msgstr "Kein gültiger Datumswert"
 
-#: app/modules/utils.py:357 app/modules/utils.py:362
+#: app/modules/utils.py:358 app/modules/utils.py:363
 msgid "Not a valid time value"
 msgstr "Kein gültiger Zeitwert"
 
-#: app/modules/books/controllers.py:125
+#: app/modules/books/controllers.py:128 app/modules/books/controllers.py:454
+#: app/modules/books/controllers.py:534 app/modules/books/controllers.py:679
+#: app/modules/books/controllers.py:751
 #: app/modules/settings/controllers.py:114
 #: app/modules/settings/controllers.py:195
 #: app/modules/settings/controllers.py:550
@@ -116,13 +118,20 @@ msgstr "Kein gültiger Zeitwert"
 msgid "This name is already in use."
 msgstr "Dieser Name wird bereits verwendet."
 
-#: app/modules/books/controllers.py:131 app/modules/books/controllers.py:212
+#: app/modules/books/controllers.py:134 app/modules/books/controllers.py:215
+#: app/modules/books/controllers.py:460 app/modules/books/controllers.py:543
+#: app/modules/books/controllers.py:895 app/modules/books/controllers.py:1007
 #: app/modules/settings/controllers.py:343
 msgid "No country found"
 msgstr "Kein Land gefunden"
 
-#: app/modules/books/controllers.py:183 app/modules/books/controllers.py:230
-#: app/modules/books/controllers.py:338 app/modules/books/controllers.py:370
+#: app/modules/books/controllers.py:186 app/modules/books/controllers.py:233
+#: app/modules/books/controllers.py:341 app/modules/books/controllers.py:381
+#: app/modules/books/controllers.py:509 app/modules/books/controllers.py:561
+#: app/modules/books/controllers.py:607 app/modules/books/controllers.py:726
+#: app/modules/books/controllers.py:770 app/modules/books/controllers.py:816
+#: app/modules/books/controllers.py:959 app/modules/books/controllers.py:1033
+#: app/modules/books/controllers.py:1134 app/modules/books/controllers.py:1171
 #: app/modules/document/controllers.py:186
 #: app/modules/document/controllers.py:248
 #: app/modules/document/controllers.py:299
@@ -147,25 +156,38 @@ msgstr "Kein Land gefunden"
 #: app/modules/settings/controllers.py:477
 #: app/modules/settings/controllers.py:595
 #: app/modules/settings/controllers.py:641
-#: app/modules/settings/controllers.py:691
+#: app/modules/settings/controllers.py:692
 #: app/modules/users/controllers.py:218 app/modules/users/controllers.py:264
-#: app/modules/users/controllers.py:775 app/modules/users/controllers.py:1489
-#: app/modules/users/controllers.py:1519 app/modules/users/controllers.py:1652
-#: app/modules/users/controllers.py:1682 app/modules/users/controllers.py:1815
-#: app/modules/users/controllers.py:1845
+#: app/modules/users/controllers.py:310 app/modules/users/controllers.py:821
+#: app/modules/users/controllers.py:1535 app/modules/users/controllers.py:1565
+#: app/modules/users/controllers.py:1698 app/modules/users/controllers.py:1728
+#: app/modules/users/controllers.py:1861 app/modules/users/controllers.py:1891
 msgid "No item found"
 msgstr "Kein Artikel gefunden"
 
-#: app/modules/books/controllers.py:266
+#: app/modules/books/controllers.py:269 app/modules/books/controllers.py:1062
 #: app/modules/document/controllers.py:503
 msgid "File not sent"
 msgstr "Datei nicht gesendet"
 
-#: app/modules/books/controllers.py:275
+#: app/modules/books/controllers.py:278 app/modules/books/controllers.py:1071
 #: app/modules/document/controllers.py:512
-#: app/modules/users/controllers.py:995
+#: app/modules/users/controllers.py:1041
 msgid "File extension not allowed"
 msgstr "Dateierweiterung nicht zulässig"
+
+#: app/modules/books/controllers.py:360
+#: app/modules/settings/controllers.py:676
+msgid "There are other items associated with this item"
+msgstr "Diesem Artikel sind weitere Artikel zugeordnet"
+
+#: app/modules/books/controllers.py:890 app/modules/books/controllers.py:999
+msgid "No author found"
+msgstr "Kein Autor gefunden"
+
+#: app/modules/books/controllers.py:900 app/modules/books/controllers.py:1015
+msgid "No publisher found"
+msgstr "Kein Verlag gefunden"
 
 #: app/modules/document/controllers.py:137
 #: app/modules/document/controllers.py:216
@@ -227,11 +249,11 @@ msgstr "Nur der Eigentümer des Dokuments kann die Datei freigeben"
 
 #: app/modules/document/controllers.py:1093
 #: app/modules/notification/controllers.py:181
-#: app/modules/users/controllers.py:455 app/modules/users/controllers.py:507
-#: app/modules/users/controllers.py:553 app/modules/users/controllers.py:607
-#: app/modules/users/controllers.py:845 app/modules/users/controllers.py:891
-#: app/modules/users/controllers.py:916 app/modules/users/controllers.py:1000
-#: app/modules/users/controllers.py:1072
+#: app/modules/users/controllers.py:501 app/modules/users/controllers.py:553
+#: app/modules/users/controllers.py:599 app/modules/users/controllers.py:653
+#: app/modules/users/controllers.py:891 app/modules/users/controllers.py:937
+#: app/modules/users/controllers.py:962 app/modules/users/controllers.py:1046
+#: app/modules/users/controllers.py:1118
 msgid "No user found"
 msgstr "Kein Benutzer gefunden"
 
@@ -297,10 +319,6 @@ msgstr "Nur der benachrichtigte Benutzer kann diese Benachrichtigung löschen"
 msgid "No city found"
 msgstr "Keine Stadt gefunden"
 
-#: app/modules/settings/controllers.py:675
-msgid "There are other items associated with this item"
-msgstr "Diesem Artikel sind weitere Artikel zugeordnet"
-
 #: app/modules/users/controllers.py:99
 msgid "Account not active. Please contact the system admin."
 msgstr "Konto nicht aktiv. Bitte wenden Sie sich an den Systemadministrator."
@@ -313,58 +331,58 @@ msgstr "Nicht vorgesehen"
 msgid "User/password combination doesn't match."
 msgstr "Benutzer/Passwort-Kombination stimmt nicht überein."
 
-#: app/modules/users/controllers.py:292 app/modules/users/controllers.py:703
+#: app/modules/users/controllers.py:338 app/modules/users/controllers.py:749
 msgid "This email address is already registered."
 msgstr "Diese Email-Adresse ist bereits registriert."
 
-#: app/modules/users/controllers.py:318
+#: app/modules/users/controllers.py:364
 msgid "This email domain is not allowed."
 msgstr "Diese E-Mail-Domäne ist nicht zulässig."
 
-#: app/modules/users/controllers.py:348
+#: app/modules/users/controllers.py:394
 msgid "Welcome to OnLibrary!"
 msgstr "Willkommen bei OnLibrary!"
 
-#: app/modules/users/controllers.py:382
+#: app/modules/users/controllers.py:428
 msgid "This email address is not registered."
 msgstr "Diese Email-Adresse ist nicht registriert."
 
-#: app/modules/users/controllers.py:398
+#: app/modules/users/controllers.py:444
 msgid "OnLibrary Password Reset"
 msgstr "Zurücksetzen des OnLibrary-Kennworts"
 
-#: app/modules/users/controllers.py:602 app/modules/users/controllers.py:715
-#: app/modules/users/controllers.py:812 app/modules/users/controllers.py:1191
-#: app/modules/users/controllers.py:1229 app/modules/users/controllers.py:1265
-#: app/modules/users/controllers.py:1353 app/modules/users/controllers.py:1428
-#: app/modules/users/controllers.py:1594 app/modules/users/controllers.py:1757
+#: app/modules/users/controllers.py:648 app/modules/users/controllers.py:761
+#: app/modules/users/controllers.py:858 app/modules/users/controllers.py:1237
+#: app/modules/users/controllers.py:1275 app/modules/users/controllers.py:1311
+#: app/modules/users/controllers.py:1399 app/modules/users/controllers.py:1474
+#: app/modules/users/controllers.py:1640 app/modules/users/controllers.py:1803
 msgid "No role found"
 msgstr "Keine Rolle gefunden"
 
-#: app/modules/users/controllers.py:709 app/modules/users/controllers.py:804
-#: app/modules/users/controllers.py:1029
+#: app/modules/users/controllers.py:755 app/modules/users/controllers.py:850
+#: app/modules/users/controllers.py:1075
 msgid "This username is already in use."
 msgstr "Dieser Benutzername wird bereits benutzt."
 
-#: app/modules/users/controllers.py:822 app/modules/users/controllers.py:1049
+#: app/modules/users/controllers.py:868 app/modules/users/controllers.py:1095
 msgid "Passwords don't match."
 msgstr "Passwörter stimmen nicht überein."
 
-#: app/modules/users/controllers.py:1039
+#: app/modules/users/controllers.py:1085
 msgid "Please inform your current password."
 msgstr "Bitte teilen Sie Ihr aktuelles Passwort mit."
 
-#: app/modules/users/controllers.py:1044
+#: app/modules/users/controllers.py:1090
 msgid "The provided current password is wrong."
 msgstr "Das angegebene aktuelle Passwort ist falsch."
 
-#: app/modules/users/controllers.py:1437
+#: app/modules/users/controllers.py:1483
 msgid "The route on the selected method is already in use for this role."
 msgstr ""
 "Die Route auf der ausgewählten Methode wird bereits für diese Rolle "
 "verwendet."
 
-#: app/modules/users/controllers.py:1602 app/modules/users/controllers.py:1765
+#: app/modules/users/controllers.py:1648 app/modules/users/controllers.py:1811
 msgid "The action is already in use for this role."
 msgstr "Die Aktion wird für diese Rolle bereits verwendet."
 

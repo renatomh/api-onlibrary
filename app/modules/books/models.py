@@ -53,6 +53,7 @@ class Author(Base):
     country_id = db.Column(db.Integer, db.ForeignKey('country.id'), nullable=True)
     
     # Relationships
+    book = db.relationship('Book', lazy='select', backref='author')
     # model_name = db.relationship('ModelName', lazy='select', backref='author')
 
     # New instance instantiation procedure
@@ -113,6 +114,7 @@ class Publisher(Base):
     country_id = db.Column(db.Integer, db.ForeignKey('country.id'), nullable=True)
     
     # Relationships
+    book = db.relationship('Book', lazy="select", backref='publisher')
     # model_name = db.relationship('ModelName', lazy='select', backref='publisher')
 
     # New instance instantiation procedure
@@ -157,6 +159,94 @@ class Genre(Base):
         # We also remove the password
         data = {c.name: default_object_string(getattr(self, c.name), timezone)
                 for c in self.__table__.columns}
+        # Adding the related tables
+        for c in self.__dict__:
+            if 'app' in str(type(self.__dict__[c])):
+                data[c] = self.__dict__[c].as_dict(timezone)
+        return data
+
+# Define a book model using Base columns
+class Book(Base):
+    __tablename__ = 'book'
+
+    # Basic data
+    title = db.Column(db.String(256), nullable=False)
+    description = db.Column(db.String(1024), nullable=True)
+    isbn = db.Column(db.String(128), nullable=True)
+    publication_date = db.Column(db.Date, nullable=True)
+    tags = db.Column(db.String(1024), nullable=True)
+    language = db.Column(db.String(32), nullable=True)
+    number_pages = db.Column(db.Integer, nullable=True)
+    observations = db.Column(db.String(1024), nullable=True)
+    edition = db.Column(db.Integer, nullable=True)
+    external_photo_url = db.Column(db.String(1024))
+
+    # Photo
+    photo_url = db.Column(db.String(1024))
+    photo_file_name = db.Column(db.String(512))
+    photo_file_content_type = db.Column(db.String(128))
+    photo_file_size = db.Column(db.String(128))
+    photo_updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                                        onupdate=db.func.current_timestamp())
+    photo_thumbnail_url = db.Column(db.String(1024))
+    photo_thumbnail_file_size = db.Column(db.String(128))
+
+    # Relationship fields
+    country_id = db.Column(db.Integer, db.ForeignKey('country.id'), nullable=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('author.id'), nullable=False)
+    publisher_id = db.Column(db.Integer, db.ForeignKey('publisher.id'), nullable=True)
+    
+    # Relationships
+    # model_name = db.relationship('ModelName', lazy='select', backref='book')
+
+    # New instance instantiation procedure
+    def __init__(self, title, author_id, description=None, isbn=None, publication_date=None, 
+        tags=None, language=None, number_pages=None, observations=None, edition=None, 
+        external_photo_url=None, country_id=None, publisher_id=None):
+        self.title = title
+        self.description = description
+        self.isbn = isbn
+        self.publication_date = publication_date
+        self.tags = tags
+        self.language = language
+        self.number_pages = number_pages
+        self.observations = observations
+        self.edition = edition
+        self.external_photo_url = external_photo_url
+        self.country_id = country_id
+        self.author_id = author_id
+        self.publisher_id = publisher_id
+
+    def __repr__(self):
+        return '<Book %r>' % (self.id)
+    
+    # Defining URL according to the storage driver
+    def full_photo_url(self):
+        if self.photo_url and self.photo_url != '':
+            if os.environ.get('STORAGE_DRIVER') == 'disk':
+                return f'{os.environ.get("APP_API_URL")}/files/{self.photo_url}'
+            elif os.environ.get('STORAGE_DRIVER') == 's3':
+                return f'https://{os.environ.get("AWS_BUCKET")}.s3.{os.environ.get("AWS_REGION")}.amazonaws.com/{self.photo_url}'
+        else:
+            return None
+
+    # Defining URL according to the storage driver
+    def full_photo_thumbnail_url(self):
+        if self.photo_thumbnail_url and self.photo_thumbnail_url != '':
+            if os.environ.get('STORAGE_DRIVER') == 'disk':
+                return f'{os.environ.get("APP_API_URL")}/files/{self.photo_thumbnail_url}'
+            elif os.environ.get('STORAGE_DRIVER') == 's3':
+                return f'https://{os.environ.get("AWS_BUCKET")}.s3.{os.environ.get("AWS_REGION")}.amazonaws.com/{self.photo_thumbnail_url}'
+        else:
+            return None
+
+    # Returning data as dict
+    def as_dict(self, timezone=tz):
+        # We also remove the password
+        data = {c.name: default_object_string(getattr(self, c.name), timezone)
+                for c in self.__table__.columns}
+        data['photo_url'] = self.full_photo_url()
+        data['photo_thumbnail_url'] = self.full_photo_thumbnail_url()
         # Adding the related tables
         for c in self.__dict__:
             if 'app' in str(type(self.__dict__[c])):

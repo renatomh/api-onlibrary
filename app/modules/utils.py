@@ -26,6 +26,7 @@ from app.modules.notification.models import *
 from app.modules.settings.models import *
 from app.modules.document.models import *
 from app.modules.log.models import *
+from app.modules.books.models import *
 
 # Function to get a model relationships
 def get_model_relationships(model):
