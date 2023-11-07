@@ -1,0 +1,86 @@
+Regsiter a new account
+---
+tags:
+  - auth
+
+post:
+  description: Registers a new account
+  consumes:
+    - application/json
+  produces:
+    - application/json
+  parameters:
+    - name: body
+      in: body
+      description: Data for the new account
+      required: true
+      schema:
+        type: object
+        properties:
+          name:
+            type: string
+          email:
+            type: string
+          password:
+            type: string
+          password_confirmation:
+            type: string
+
+responses:
+  200:
+    description: Register result
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+              example: 2023-01-01T08:00:00-0300
+            updated_at:
+              type: string
+              format: date-time
+              example: 2023-01-03T10:00:00-0300
+            name:
+              type: string
+            username:
+              type: string
+            email:
+              type: string
+            avatar_thumbnail_url:
+              type: string
+              example: null
+            avatar_url:
+              type: string
+              example: null
+            fcm_token:
+              type: string
+              example: null
+            is_active:
+              type: integer
+              example: 0
+            is_verified:
+              type: integer
+              example: 0
+            last_login_at:
+              type: string
+              format: date-time
+              example: null
+            role_id:
+              type: integer
+              example: 2
+            socketio_sid:
+              type: string
+              example: null
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean

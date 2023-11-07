@@ -1,5 +1,15 @@
 {
     "python.analysis.extraPaths": [
         "./env/Lib/site-packages"
-    ]
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[terraform]": {
+        "editor.formatOnSave": true
+    },
+    "editor.formatOnSave": true
 }

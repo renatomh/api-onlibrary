@@ -1,0 +1,80 @@
+Set a specific notification as read
+---
+tags:
+  - notifications
+
+security:
+  - Bearer: []
+
+put:
+  consumes:
+    - application/json
+  produces:
+    - application/json
+  parameters:
+    - name: id
+      in: path
+      type: integer
+      required: true
+      description: ID for the item to be updated
+      example: 1
+    - name: body
+      in: body
+      description: 'Optional date when notification was read and flag for read notification (0: "Unread"; 1: "Read")'
+      required: true
+      schema:
+        type: object
+        properties:
+          is_read:
+            type: integer
+            example: 1
+          read_at:
+            type: string
+            format: date-time
+            example: 2023-01-11T12:00:00-0300
+
+responses:
+  200:
+    description: Read notification
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+              example: 2023-01-01T08:00:00-0300
+            updated_at:
+              type: string
+              format: date-time
+              example: 2023-01-03T10:00:00-0300
+            title:
+              type: string
+            description:
+              type: string
+            web_action:
+              type: string
+            mobile_action:
+              type: string
+            read_at:
+              type: string
+              format: date-time
+              example: 2023-01-11T12:00:00-0300
+            user_id:
+              type: integer
+              example: 1
+            is_read:
+              type: integer
+              example: 1
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean

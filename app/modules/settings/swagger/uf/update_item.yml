@@ -1,0 +1,70 @@
+Update an existing UF
+This endpoint updates an existing UF in the database.
+---
+tags:
+  - uf
+
+security:
+  - Bearer: []
+
+put:
+  description: Update an existing UF
+  consumes:
+    - application/json
+  produces:
+    - application/json
+  parameters:
+    - name: id
+      in: path
+      type: integer
+      required: true
+      description: ID for the item to be updated
+      example: 1
+    - name: body
+      in: body
+      description: Data to be updated
+      required: true
+      schema:
+        type: object
+        properties:
+          code:
+            type: string
+            example: DF
+          name:
+            type: string
+            example: Distrito Federal
+
+responses:
+  200:
+    description: Newly updated item
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+              example: 2023-01-01T08:00:00-0300
+            updated_at:
+              type: string
+              format: date-time
+              example: 2023-01-03T10:00:00-0300
+            code:
+              type: string
+              example: DF
+            name:
+              type: string
+              example: Distrito Federal
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true

@@ -11,10 +11,12 @@ import firebase_admin
 from config import BASE_DIR
 
 # Firebase Cloud Messaging
-if os.environ.get('PUSH_NOTIFICATION_DRIVER') == 'fcm':
+if os.environ.get("PUSH_NOTIFICATION_DRIVER") == "fcm":
     # Getting Firebase credentials
-    creds = credentials.Certificate(BASE_DIR + os.sep + os.environ.get('FCM_CREDS_JSON_FILE'))
-    
+    creds = credentials.Certificate(
+        BASE_DIR + os.sep + os.environ.get("FCM_CREDS_JSON_FILE")
+    )
+
     # Initializing the Firebase app
     default_app = firebase_admin.initialize_app(creds)
 
@@ -27,7 +29,7 @@ if os.environ.get('PUSH_NOTIFICATION_DRIVER') == 'fcm':
                 body=body,
             ),
             data=data,
-            token=token
+            token=token,
         )
         # Sending the defined message
         response = messaging.send(message)
@@ -38,7 +40,8 @@ if os.environ.get('PUSH_NOTIFICATION_DRIVER') == 'fcm':
     # Function to send a push notification for a set of tokens
     def send_multicast_message(tokens, title, body, data=None):
         # Checking if user has provided a lista of tokens
-        try: assert isinstance(tokens, list)
+        try:
+            assert isinstance(tokens, list)
         # If not, we'll inform about the error and return
         except Exception as e:
             print(e)
@@ -51,7 +54,7 @@ if os.environ.get('PUSH_NOTIFICATION_DRIVER') == 'fcm':
                 body=body,
             ),
             data=data,
-            tokens=tokens
+            tokens=tokens,
         )
         # Sending the defined message
         response = messaging.send_multicast(message)
@@ -59,16 +62,17 @@ if os.environ.get('PUSH_NOTIFICATION_DRIVER') == 'fcm':
         print(response)
         return response
 
+
 # If no driver was provided
 else:
     # Function to send a push notification for a specific token
     def send_message(token, title, body, data=None):
         # Informing user about no driver provided
-        print('No driver provided')
+        print("No driver provided")
         return
 
     # Function to send a push notification for a set of tokens
     def send_multicast_message(tokens, title, body, data=None):
         # Informing user about no driver provided
-        print('No driver provided')
+        print("No driver provided")
         return

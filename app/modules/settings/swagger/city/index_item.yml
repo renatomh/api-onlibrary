@@ -1,0 +1,104 @@
+Get a list of cities
+This endpoint retrieves a list of cities.
+---
+tags:
+  - cities
+
+security:
+  - Bearer: []
+
+parameters:
+  - name: limit
+    in: query
+    type: integer
+    required: false
+    description: The maximum number of items to retrieve.
+    example: 15
+
+  - name: page
+    in: query
+    type: string
+    required: false
+    description: Page number to retrieve items
+    example: 1
+
+  - name: filter
+    in: query
+    type: string
+    required: false
+    description: List of properties for filtering
+    example: '[{"property":"id","value":"","anyMatch":true,"joinOn":"and","operator":"=="}]'
+
+  - name: sort
+    in: query
+    type: string
+    required: false
+    description: List of properties for sorting
+    example: '[{"property":"id","direction":"ASC"}]'
+
+  - name: timezone
+    in: query
+    type: string
+    required: false
+    description: Timezone for request
+    example: America/Sao_Paulo
+
+responses:
+  200:
+    description: List of items
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              created_at:
+                type: string
+                format: date-time
+                example: 2023-01-01T08:00:00-0300
+              updated_at:
+                type: string
+                format: date-time
+                example: 2023-01-03T10:00:00-0300
+              name:
+                type: string
+                example: Brasília
+              uf_id:
+                type: integer
+                example: 1
+              uf:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: 2023-01-01T08:00:00-0300
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: 2023-01-03T10:00:00-0300
+                  code:
+                    type: string
+                    example: DF
+                  name:
+                    type: string
+                    example: Distrito Federal
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            count:
+              type: integer
+              example: 1

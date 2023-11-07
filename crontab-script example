@@ -4,12 +4,12 @@
 # Then we will select the directory from where the command should be executed
 # After that, we define the command/application to run (/bin/bash, /usr/bin/python3, etc.)
 # Finally, we can select the options (such as script names, etc.)
-# Ex.: 0 0 * * * cd /home/onlibrary && /bin/bash /home/onlibrary/script.sh
+# Ex.: 0 0 * * * cd /home/user && /bin/bash /home/user/script.sh
 
 # Defining the app root folder (must be updated for different machines/users)
-APP_ROOT_FOLDER="/home/onlibrary/systems/api-onlibrary"
+APP_ROOT_FOLDER="/home/user/systems/api-onlibrary"
 # Defining the Python bin path for the app's virtual env (must be updated for different machines/users/envs)
-ENV_PYTHON="/home/onlibrary/systems/api-onlibrary/env/bin/python"
+ENV_PYTHON="/home/user/systems/api-onlibrary/env/bin/python"
 
 # Task scheduler for documents expiration notification
 # The PYTHONPATH must be set, or there might be problems on project's folder importing when using venv on Unix machines

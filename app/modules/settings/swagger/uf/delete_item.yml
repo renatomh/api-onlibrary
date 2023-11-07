@@ -1,0 +1,20 @@
+Deletes an UF by its ID
+This endpoint deletes a specific UF.
+---
+tags:
+  - uf
+
+security:
+  - Bearer: []
+
+parameters:
+  - name: id
+    in: path
+    type: integer
+    required: true
+    description: Item's ID
+    example: 1
+
+responses:
+  204:
+    description: Response

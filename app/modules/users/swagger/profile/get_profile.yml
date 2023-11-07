@@ -1,0 +1,89 @@
+Get your user's profile
+---
+tags:
+  - profile
+
+security:
+  - Bearer: []
+
+get:
+  description: Get your user's profile
+  produces:
+    - application/json
+
+responses:
+  200:
+    description: User's profile
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+              example: 2023-01-01T08:00:00-0300
+            updated_at:
+              type: string
+              format: date-time
+              example: 2023-01-03T10:00:00-0300
+            name:
+              type: string
+            username:
+              type: string
+            email:
+              type: string
+            avatar_thumbnail_url:
+              type: string
+              example: null
+            avatar_url:
+              type: string
+              example: null
+            fcm_token:
+              type: string
+              example: null
+            is_active:
+              type: integer
+              example: 1
+            is_verified:
+              type: integer
+              example: 1
+            last_login_at:
+              type: string
+              format: date-time
+              example: null
+            role:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                created_at:
+                  type: string
+                  format: date-time
+                  example: 2023-01-01T08:00:00-0300
+                updated_at:
+                  type: string
+                  format: date-time
+                  example: 2023-01-03T10:00:00-0300
+                name:
+                  type: string
+                  example: Admin
+            role_id:
+              type: integer
+              example: 1
+            socketio_sid:
+              type: string
+              example: null
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true

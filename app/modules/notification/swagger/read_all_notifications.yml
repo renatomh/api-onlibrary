@@ -1,0 +1,34 @@
+Set all notifications for a specific user as read
+---
+tags:
+  - notifications
+
+security:
+  - Bearer: []
+
+put:
+  consumes:
+    - application/json
+  produces:
+    - application/json
+
+responses:
+  200:
+    description: Read notifications count
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: object
+          properties:
+            read_notifcations_count:
+              type: integer
+              example: 5
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true

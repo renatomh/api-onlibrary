@@ -1,0 +1,108 @@
+Login to an existing account
+---
+tags:
+  - auth
+
+post:
+  description: Login to an existing account
+  consumes:
+    - application/json
+  produces:
+    - application/json
+  parameters:
+    - name: body
+      in: body
+      description: The account credentials to login
+      required: true
+      schema:
+        type: object
+        properties:
+          username:
+            type: string
+            example: username
+          password:
+            type: string
+            example: password
+
+responses:
+  200:
+    description: Login result
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+              example: 2023-01-01T08:00:00-0300
+            updated_at:
+              type: string
+              format: date-time
+              example: 2023-01-03T10:00:00-0300
+            name:
+              type: string
+            username:
+              type: string
+            email:
+              type: string
+            avatar_thumbnail_url:
+              type: string
+            avatar_url:
+              type: string
+            fcm_token:
+              type: string
+            is_active:
+              type: integer
+              example: 1
+            is_verified:
+              type: integer
+              example: 1
+            last_login_at:
+              type: string
+              format: date-time
+              example: 2023-01-01T08:00:00-0300
+            role:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                created_at:
+                  type: string
+                  format: date-time
+                  example: 2023-01-01T08:00:00-0300
+                updated_at:
+                  type: string
+                  format: date-time
+                  example: 2023-01-03T10:00:00-0300
+                name:
+                  type: string
+                mobile_actions:
+                  type: array
+                  items:
+                    type: string
+                web_actions:
+                  type: array
+                  items:
+                    type: string
+            role_id:
+              type: integer
+              example: 1
+            socketio_sid:
+              type: string
+            token:
+              type: string
+            unread_notifications_count:
+              type: integer
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean

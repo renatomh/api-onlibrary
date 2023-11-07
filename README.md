@@ -24,15 +24,21 @@ During the development of this project, the following techologies were used:
 
 - [Python](https://www.python.org/)
 - [Flask](https://flask.palletsprojects.com/en/2.0.x/)
-- [SQLAlchemy](https://www.sqlalchemy.org/)
+- [Alembic (Migrations)](https://alembic.sqlalchemy.org/en/latest/)
+- [Flasgger (Swagger Documentation)](https://github.com/flasgger/flasgger)
+- [SQLAlchemy (ORM)](https://www.sqlalchemy.org/)
 - [Flask-Babel](https://flask-babel.tkte.ch/)
 - [Flask-SocketIO](https://flask-socketio.readthedocs.io/en/latest/index.html)
-- [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging)
+- [Firebase Cloud Messaging (Push Notifications)](https://firebase.google.com/docs/cloud-messaging)
 - [Jinja2](https://jinja.palletsprojects.com/en/3.1.x/)
 - [Gunicorn](https://gunicorn.org/)
+- [Black Formatter](https://github.com/psf/black)
 - [Let's Encrypt](https://letsencrypt.org/pt-br/)
 - [FFmpeg](https://ffmpeg.org/)
 - [Docker](https://www.docker.com/)
+- [Sentry - Application Performance Monitoring & Error Tracking](https://sentry.io/welcome/)
+- [Terraform](https://www.terraform.io/)
+- [GitHub Actions (CI/CD)](https://github.com/features/actions)
 
 ## 💻 Project Configuration
 
@@ -103,6 +109,10 @@ Since the application allows working with different time zones, it might be inte
 
 Also, on server's migration, the database backup could be coming from a machine with a different time zone definition. In this case, it might be necessary to convert the datetime records to the new machine time zone, or set the new machine time zone to the same as the previous machine.
 
+### Black Formatter
+
+The project uses the [Black Python code formatter](https://github.com/psf/black), provided by the Black Formatter VS Code extension (**ms-python.black-formatter**). It's a good practice to install it on your VS Code environment, so the code formatting will be consistent.
+
 ## ⏱ Setting up services
 
 In order to execute tasks, jobs, scripts and others periodically, we can set up services in the computer where the application should be running.
@@ -112,6 +122,34 @@ In order to execute tasks, jobs, scripts and others periodically, we can set up 
 The sample crontab configuration provided (*crontab-script example*) shows how to set tasks to be executed at the specified dates and times on a Unix machine, using *crontab*.
 
 These must be set in order to run the *jobs* created for the application (from the folder *app/jobs*).
+
+## 💾 Database Migrations
+
+Once the SQL server is ready (MySQL, PostgreSQL, etc.) and the required credentials to access it are present in the *.env* file, you can run the migrations with the command:
+
+```bash
+(env) $ alembic upgrade head
+```
+
+You can also downgrade the migrations with the following command:
+
+```bash
+(env) $ alembic downgrade base
+```
+
+Alternatively, you can migrate up or down by a specific number of revision, or to a specific revision:
+
+```bash
+(env) $ alembic upgrade +2 # Migrating up 2 revisions
+(env) $ alembic downgrade -1 # Migrating down 1 revision
+(env) $ alembic upgrade db9257fac0e2 # Migrating to a specific revision
+```
+
+When there are changes to the application models, new revisions for the migrations can be generated with the command below (where you can provide a custom short description for the update):
+
+```bash
+(env) $ alembic revision --autogenerate -m "revision description"
+```
 
 ## ⏯️ Running
 
@@ -161,7 +199,7 @@ In order to serve the application with Nginx, it can be configured like so (adju
 # Flask Server
 server {
     listen 80;
-    server_name api.onlibrary.com.br;
+    server_name api.domain.com.br;
 
     location / {
         include proxy_params;
@@ -191,7 +229,7 @@ $ sudo apt install snapd # Installs snapd
 $ sudo snap install core; sudo snap refresh core # Ensures snapd version is up to date
 $ sudo snap install --classic certbot # Installs Certbot
 $ sudo ln -s /snap/bin/certbot /usr/bin/certbot # Prepares the Certbot command
-$ sudo certbot --nginx -d api.onlibrary.com.br
+$ sudo certbot --nginx -d api.domain.com.br
 ```
 
 ## 🐳 Docker
@@ -248,6 +286,36 @@ The tests can then be run:
 (env) $ pytest # Optionally, you can add options like '-W ignore::DeprecationWarning' to suppress specific warnings or '-o log_cli=true' to show logs outputs
 ```
 
+Also, you can generate HTML test coverage reports with the commands below:
+
+```bash
+(env) $ coverage run -m pytest
+(env) $ coverage html
+```
+
+## 🏗️ Infrastructure as Code (IaC) with Terraform
+
+To make it easier to provision infrastructure on cloud providers, you can make use of the [Terraform template](main.tf) provided.
+
+First, you'll need to [install Terraform](https://developer.hashicorp.com/terraform/downloads) on your machine; then, since we're using AWS for the specified resources, you'll need to install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) as well.
+
+After that, you must set up an IAM user with permissions to manage resources, create an access key for the new user and configure the AWS CLI with the following command (entering the access key ID, secret access key, default region and outout format):
+
+```bash
+$ aws configure
+```
+
+Once these steps are done, you can use the Terraform commands to create, update and delete resources.
+
+```bash
+$ terraform init # Downloads the necessary provider plugins and set up the working directory
+$ terraform plan # Creates the execution plan for the resources
+$ terraform apply # Executes the actions proposed in a Terraform plan
+$ terraform destroy # Destroys all remote objects managed by a particular Terraform configuration
+```
+
+If you want to provide the required variables for Terraform automatically when executing the script, you can create a file called *prod.auto.tfvars* file on the root directory, with all needed variables, according to the sample provided ([auto.tfvars](auto.tfvars)).
+
 ### Documentation:
 * [Como servir os aplicativos Flask com o Gunicorn e o Nginx no Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-gunicorn-and-nginx-on-ubuntu-18-04-pt)
 * [Como servir aplicativos Flask com o uWSGI e o Nginx no Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uswgi-and-nginx-on-ubuntu-18-04-pt)
@@ -290,6 +358,9 @@ The tests can then be run:
 * [How to Create a MySql Instance with Docker Compose](https://medium.com/@chrischuck35/how-to-create-a-mysql-instance-with-docker-compose-1598f3cc1bee)
 * [How to run a makefile in Windows?](https://stackoverflow.com/questions/2532234/how-to-run-a-makefile-in-windows)
 * [How to get a shell environment variable in a makefile?](https://stackoverflow.com/questions/28890634/how-to-get-a-shell-environment-variable-in-a-makefile)
+* [Tutorial — Alembic 1.12.0 documentation](https://alembic.sqlalchemy.org/en/latest/tutorial.html)
+* [Flask | Sentry Documentation](https://docs.sentry.io/platforms/python/guides/flask/)
+* [ChatGPT | Terraform AWS Usage](https://chat.openai.com/share/c6aee35c-e817-4d30-9bab-885e116153e1)
 
 ## 📄 License
 

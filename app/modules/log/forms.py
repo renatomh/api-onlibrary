@@ -15,21 +15,21 @@ from wtforms.validators import InputRequired, Length
 # Initiating JSON for forms
 wtforms_json.init()
 
+
 # Define the create log form (WTForms)
 class CreateLogForm(Form):
     # TODO: must be updated if other models should be allowed
-    model_name = RadioField('Model Name', 
+    model_name = RadioField(
+        "Model Name",
         choices=[
-            ('User', 'User'),
+            ("User", "User"),
         ],
-        validators=[
-            InputRequired(message='You must provide a valid model name')
-        ]
+        validators=[InputRequired(message="You must provide a valid model name")],
     )
-    description = TextField('Description', [
-        InputRequired(message='You must provide a description.'),
-        Length(max=1024)
-    ])
-    model_id = IntegerField('Model ID', [
-        InputRequired(message='You must provide the model ID.')
-    ])
+    description = TextField(
+        "Description",
+        [InputRequired(message="You must provide a description."), Length(max=1024)],
+    )
+    model_id = IntegerField(
+        "Model ID", [InputRequired(message="You must provide the model ID.")]
+    )

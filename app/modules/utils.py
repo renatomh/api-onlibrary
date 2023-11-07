@@ -2,6 +2,7 @@
 
 # Import dependencies
 import ast
+import re
 
 # JSON parsing
 import json
@@ -26,7 +27,7 @@ from app.modules.notification.models import *
 from app.modules.settings.models import *
 from app.modules.document.models import *
 from app.modules.log.models import *
-from app.modules.books.models import *
+
 
 # Function to get a model relationships
 def get_model_relationships(model):
@@ -34,44 +35,88 @@ def get_model_relationships(model):
     model_relationships = {}
     for r in list(model.__mapper__.relationships):
         # Getting the model attribute name
-        model_attr = str(r).replace(model.__name__+'.', '')
+        model_attr = str(r).replace(model.__name__ + ".", "")
         # Getting the related models
         # Checking if it's a many-to-many relationship or not
-        if r.__dict__['uselist'] == False:
+        if r.__dict__["uselist"] == False:
             model_relationships[model_attr] = {
-                'model': eval(r.entity.class_.__name__), 'kind': 'one'}
+                "model": eval(r.entity.class_.__name__),
+                "kind": "one",
+            }
         else:
             model_relationships[model_attr] = {
-                'model': r.__dict__['secondary'], 'kind': 'many'}
+                "model": r.__dict__["secondary"],
+                "kind": "many",
+            }
     return model_relationships
+
 
 # Function to get the sorting attributes for a call
 def get_sort_attrs(model, sort):
     # If no sorting attributes were provided, we'll use the 'id' by default
-    if sort == "[]": sort = '[{"property": "id", "direction": "ASC"}]'
+    if sort == "[]":
+        sort = '[{"property": "id", "direction": "ASC"}]'
+
+    # Getting the model relationships
+    model_relationships = get_model_relationships(model)
+
     # Retrieving the sorting attributes
     sort_attrs = []
     for s in json.loads(sort):
+        # Initizaling the sort model as the query model and the property name
+        sort_model = model
+        property = s["property"]
+
+        # Here we check if the property is from the model or a relationship
+        if "." in s["property"]:
+            # If it refers to a relationship property, we need to select the model where to get the attrs from
+            input_relationship = s["property"].split(".")[0]
+
+            # For a one-to-many relationship
+            if model_relationships[input_relationship]["kind"] == "one":
+                sort_model = model_relationships[input_relationship]["model"]
+
+            # For a many-to-many relationship
+            elif model_relationships[input_relationship]["kind"] == "many":
+                sort_model = model_relationships[input_relationship]["model"].c
+
+            # Correcting the property name (removing the 'relationship.' from the beggining)
+            property = s["property"].split(".")[1]
+
         sort_attrs.append(
-            getattr(getattr(model, s['property']), s['direction'].lower())())
+            getattr(getattr(sort_model, property), s["direction"].lower())()
+        )
     return sort_attrs
 
+
 # Function to get the join attributes/relationships for a call
-def get_join_attrs(model, filter):
+def get_join_attrs(model, filter, sort):
     # Getting the model relationships
     model_relationships = get_model_relationships(model)
     # Retrieving the join attributes
     join_attrs = []
+    # Joins required by filters
     for f in json.loads(filter):
         # First of all, we check if the property is from the model or a relationship
-        if ('.' in f['property']):
+        if "." in f["property"]:
             # If it belongs to a relationship property
-            input_relationship = f['property'].split('.')[0]
+            input_relationship = f["property"].split(".")[0]
             if input_relationship in model_relationships.keys():
                 # We add it to the join list if not already present
-                if model_relationships[input_relationship]['model'] not in join_attrs:
-                    join_attrs.append(model_relationships[input_relationship]['model'])
+                if model_relationships[input_relationship]["model"] not in join_attrs:
+                    join_attrs.append(model_relationships[input_relationship]["model"])
+    # Joins required by sorting
+    for s in json.loads(sort):
+        # First of all, we check if the property is from the model or a relationship
+        if "." in s["property"]:
+            # If it belongs to a relationship property
+            input_relationship = s["property"].split(".")[0]
+            if input_relationship in model_relationships.keys():
+                # We add it to the join list if not already present
+                if model_relationships[input_relationship]["model"] not in join_attrs:
+                    join_attrs.append(model_relationships[input_relationship]["model"])
     return join_attrs
+
 
 # Function to check for datetime object/strings
 def format_filter_parameter(object, timezone=tz):
@@ -87,132 +132,185 @@ def format_filter_parameter(object, timezone=tz):
         # Otherwise, we'll return the raw object
         return object
 
+
 # Function to get the filtering attributes for a call
 def get_filter_attrs(model, filter, timezone=tz):
     # Getting the model relationships
     model_relationships = get_model_relationships(model)
-    
+
     # Retrieving the 'and' filtering attributes
     and_filter_attrs = []
     # Retrieving the 'or' filtering attributes
     or_filter_attrs = []
-    
+
     # For each property to be filtered
     for f in json.loads(filter):
         # Initizaling the filter model as the query model and the property name
         filter_model = model
-        property = f['property']
-        
+        property = f["property"]
+
         # Checking if the join will be on 'and' or 'or' (by default, it will be on 'and')
-        join_on = f.get('joinOn', 'and').lower()
+        join_on = f.get("joinOn", "and").lower()
         # Verifying if 'joinOn' option is valid
-        if join_on not in ('or', 'and'):
+        if join_on not in ("or", "and"):
             raise Exception(f"Invalid '{join_on}' as 'joinOn' option ('or', 'and').")
-        
+
         # First of all, we check if the property is from the model or a relationship
-        if ('.' in f['property']):
+        if "." in f["property"]:
             # If it refers to a relationship property, we need to select the model where to get the attrs from
-            input_relationship = f['property'].split('.')[0]
-            
+            input_relationship = f["property"].split(".")[0]
+
             # For a one-to-many relationship
-            if model_relationships[input_relationship]['kind'] == 'one':
-                filter_model = model_relationships[input_relationship]['model']
-            
+            if model_relationships[input_relationship]["kind"] == "one":
+                filter_model = model_relationships[input_relationship]["model"]
+
             # For a many-to-many relationship
-            elif model_relationships[input_relationship]['kind'] == 'many':
-                filter_model = model_relationships[input_relationship]['model'].c
-            
+            elif model_relationships[input_relationship]["kind"] == "many":
+                filter_model = model_relationships[input_relationship]["model"].c
+
             # Correcting the property name (removing the 'relationship.' from the beggining)
-            property = f['property'].split('.')[1]
-        
+            property = f["property"].split(".")[1]
+
         # Now we create the filters
         # 'Like'/'Ilike'/'Not Like'/'Not Ilike' operator
-        if f['operator'].lower() in ['like', 'ilike', 'notlike', 'notilike']:
+        if f["operator"].lower() in ["like", "ilike", "notlike", "notilike"]:
             # Getting the value for the property
-            value = f.get('value', '')
+            value = f.get("value", "")
             # Formatting to localize datetime
             value = format_filter_parameter(value, timezone)
-            
+
             # If it was set to anyMatch (it could be in the middle of a string)
-            if (f.get('anyMatch', True)):
+            if f.get("anyMatch", True):
                 value = f"%{f['value']}%"
-            
+
             # Appending the item to the filters
-            if join_on == 'and':
+            if join_on == "and":
                 and_filter_attrs.append(
-                    getattr(getattr(filter_model, property), f['operator'].lower())(value)
+                    getattr(getattr(filter_model, property), f["operator"].lower())(
+                        value
+                    )
                 )
-            elif join_on == 'or':
+            elif join_on == "or":
                 or_filter_attrs.append(
-                    getattr(getattr(filter_model, property), f['operator'].lower())(value)
+                    getattr(getattr(filter_model, property), f["operator"].lower())(
+                        value
+                    )
                 )
-        
+
         # Logical operators
-        if f['operator'].lower() == '==':
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(filter_model, property) == format_filter_parameter(f['value'], timezone))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(filter_model, property) == format_filter_parameter(f['value'], timezone))
-        if f['operator'].lower() == '!=':
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(filter_model, property) != format_filter_parameter(f['value'], timezone))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(filter_model, property) != format_filter_parameter(f['value'], timezone))
-        if f['operator'].lower() == '<':
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(filter_model, property) < format_filter_parameter(f['value'], timezone))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(filter_model, property) < format_filter_parameter(f['value'], timezone))
-        if f['operator'].lower() == '<=':
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(filter_model, property) <= format_filter_parameter(f['value'], timezone))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(filter_model, property) <= format_filter_parameter(f['value'], timezone))
-        if f['operator'].lower() == '>':
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(filter_model, property) > format_filter_parameter(f['value'], timezone))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(filter_model, property) > format_filter_parameter(f['value'], timezone))
-        if f['operator'].lower() == '>=':
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(filter_model, property) >= format_filter_parameter(f['value'], timezone))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(filter_model, property) >= format_filter_parameter(f['value'], timezone))
-        
+        if f["operator"].lower() == "==":
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(filter_model, property)
+                    == format_filter_parameter(f["value"], timezone)
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(filter_model, property)
+                    == format_filter_parameter(f["value"], timezone)
+                )
+        if f["operator"].lower() == "!=":
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(filter_model, property)
+                    != format_filter_parameter(f["value"], timezone)
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(filter_model, property)
+                    != format_filter_parameter(f["value"], timezone)
+                )
+        if f["operator"].lower() == "<":
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(filter_model, property)
+                    < format_filter_parameter(f["value"], timezone)
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(filter_model, property)
+                    < format_filter_parameter(f["value"], timezone)
+                )
+        if f["operator"].lower() == "<=":
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(filter_model, property)
+                    <= format_filter_parameter(f["value"], timezone)
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(filter_model, property)
+                    <= format_filter_parameter(f["value"], timezone)
+                )
+        if f["operator"].lower() == ">":
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(filter_model, property)
+                    > format_filter_parameter(f["value"], timezone)
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(filter_model, property)
+                    > format_filter_parameter(f["value"], timezone)
+                )
+        if f["operator"].lower() == ">=":
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(filter_model, property)
+                    >= format_filter_parameter(f["value"], timezone)
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(filter_model, property)
+                    >= format_filter_parameter(f["value"], timezone)
+                )
+
         # 'In' operator
-        if f['operator'].lower() == 'in':
+        if f["operator"].lower() == "in":
             # Getting the list of values and checking for datetime items
-            raw_value = ast.literal_eval(f['value'])
+            raw_value = ast.literal_eval(f["value"])
             value = [format_filter_parameter(v, timezone) for v in raw_value]
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(getattr(filter_model, property), 'in_')(value))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(getattr(filter_model, property), 'in_')(value))
-        
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(getattr(filter_model, property), "in_")(value)
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(getattr(filter_model, property), "in_")(value)
+                )
+
         # 'Not In' operator
-        if f['operator'].lower() == 'not_in':
+        if f["operator"].lower() == "not_in":
             # Getting the list of values and checking for datetime items
-            raw_value = ast.literal_eval(f['value'])
+            raw_value = ast.literal_eval(f["value"])
             value = [format_filter_parameter(v, timezone) for v in raw_value]
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(getattr(filter_model, property), 'not_in')(value))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(getattr(filter_model, property), 'not_in')(value))
-        
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(getattr(filter_model, property), "not_in")(value)
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(getattr(filter_model, property), "not_in")(value)
+                )
+
         # 'Between' dates operator
-        if f['operator'].lower() == 'between':
-            value = ast.literal_eval(f['value'])
-            if join_on == 'and':
-                and_filter_attrs.append(getattr(getattr(filter_model, property), 'between')(
-                        format_filter_parameter(value[0], timezone), 
-                        format_filter_parameter(value[1], timezone)
-                    ))
-            elif join_on == 'or':
-                or_filter_attrs.append(getattr(getattr(filter_model, property), 'between')(
-                        format_filter_parameter(value[0], timezone), 
-                        format_filter_parameter(value[1], timezone)
-                    ))
-    
+        if f["operator"].lower() == "between":
+            value = ast.literal_eval(f["value"])
+            if join_on == "and":
+                and_filter_attrs.append(
+                    getattr(getattr(filter_model, property), "between")(
+                        format_filter_parameter(value[0], timezone),
+                        format_filter_parameter(value[1], timezone),
+                    )
+                )
+            elif join_on == "or":
+                or_filter_attrs.append(
+                    getattr(getattr(filter_model, property), "between")(
+                        format_filter_parameter(value[0], timezone),
+                        format_filter_parameter(value[1], timezone),
+                    )
+                )
+
     # Now, the two filtering attributes list must be concatenated
     filter_attrs = []
     # Extending for the 'and' filters
@@ -221,9 +319,10 @@ def get_filter_attrs(model, filter, timezone=tz):
     # Extending for the 'or' filters
     if len(or_filter_attrs) > 0:
         filter_attrs.append(or_(*or_filter_attrs))
-    
+
     # Returning the obtained filters
     return filter_attrs
+
 
 # Function to append data to log files
 def log(file, message, level, log_format=None):
@@ -232,8 +331,8 @@ def log(file, message, level, log_format=None):
     # If no log format was provided, we use a default one
     if log_format is None:
         log_format = logging.Formatter(
-            '%(asctime)s [%(levelname)s]: %(message)s', 
-            '%Y-%m-%d %H:%M:%S' # Datetime format
+            "%(asctime)s [%(levelname)s]: %(message)s",
+            "%Y-%m-%d %H:%M:%S",  # Datetime format
         )
     # Setting te defined format
     info_log.setFormatter(log_format)
@@ -241,29 +340,30 @@ def log(file, message, level, log_format=None):
     logger = logging.getLogger(file)
     # Setting a threshold for the levels to be logged
     logger.setLevel(level)
-    
-    # If there's not logger handler 
+
+    # If there's not logger handler
     if not logger.handlers:
         # Adding a new handler
         logger.addHandler(info_log)
         # And appending the message with the level set
-        if (level == logging.DEBUG):
+        if level == logging.DEBUG:
             logger.debug(message)
-        elif (level == logging.INFO):
+        elif level == logging.INFO:
             logger.info(message)
-        elif (level == logging.WARNING):
+        elif level == logging.WARNING:
             logger.warning(message)
-        elif (level == logging.ERROR):
+        elif level == logging.ERROR:
             logger.error(message)
-        elif (level == logging.CRITICAL):
+        elif level == logging.CRITICAL:
             logger.critical(message)
-    
+
     # Closing and removing the handler
     info_log.close()
     logger.removeHandler(info_log)
-    
+
     # Returning the function
     return
+
 
 # Custom wtforms required conditional field
 class RequiredIf(object):
@@ -286,78 +386,86 @@ class RequiredIf(object):
                         message = f"Field required when '{condition_field}' equals to '{dependent_value}'."
                     raise ValidationError(message)
 
+
 # Custom wtforms 'DateTimeField' validator, which checks for data type
 class DateTimeField(Field):
     """
     A text field which stores a `datetime.datetime` matching a format.
     """
+
     widget = widgets.TextInput()
 
-    def __init__(self, label=None, validators=None, format='%Y-%m-%d %H:%M:%S', **kwargs):
+    def __init__(
+        self, label=None, validators=None, format="%Y-%m-%d %H:%M:%S", **kwargs
+    ):
         super(DateTimeField, self).__init__(label, validators, **kwargs)
         self.format = format
 
     def _value(self):
         if self.raw_data:
-            return ' '.join(self.raw_data)
+            return " ".join(self.raw_data)
         else:
-            return self.data and self.data.strftime(self.format) or ''
+            return self.data and self.data.strftime(self.format) or ""
 
     def process_formdata(self, valuelist):
         if valuelist:
             try:
                 # Must be within the try/except
-                date_str = ' '.join(valuelist)
+                date_str = " ".join(valuelist)
             except Exception as e:
-                raise ValueError(self.gettext('Not a valid datetime value'))
+                raise ValueError(self.gettext("Not a valid datetime value"))
             try:
                 # Checking which format was provided
-                if self.format == '%Y-%m-%dT%H:%M:%S%z':
+                if self.format == "%Y-%m-%dT%H:%M:%S%z":
                     self.data = datetime.strptime(date_str, self.format).astimezone(tz)
                 else:
                     self.data = datetime.strptime(date_str, self.format)
             except ValueError:
                 self.data = None
-                raise ValueError(self.gettext('Not a valid datetime value'))
+                raise ValueError(self.gettext("Not a valid datetime value"))
+
 
 # Custom wtforms 'DateField' validator, which checks for data type
 class DateField(DateTimeField):
     """
     Same as DateTimeField, except stores a `datetime.date`.
     """
-    def __init__(self, label=None, validators=None, format='%Y-%m-%d', **kwargs):
+
+    def __init__(self, label=None, validators=None, format="%Y-%m-%d", **kwargs):
         super(DateField, self).__init__(label, validators, format, **kwargs)
 
     def process_formdata(self, valuelist):
         if valuelist:
             try:
                 # Must be within the try/except
-                date_str = ' '.join(valuelist)
+                date_str = " ".join(valuelist)
             except Exception as e:
-                raise ValueError(self.gettext('Not a valid date value'))
+                raise ValueError(self.gettext("Not a valid date value"))
             try:
                 self.data = datetime.strptime(date_str, self.format).date()
             except ValueError:
                 self.data = None
-                raise ValueError(self.gettext('Not a valid date value'))
+                raise ValueError(self.gettext("Not a valid date value"))
+
 
 # Custom wtforms 'TimeField' validator, which checks for data type
 class TimeField(DateTimeField):
     """
     Same as DateTimeField, except stores a `time`.
     """
-    def __init__(self, label=None, validators=None, format='%H:%M', **kwargs):
+
+    def __init__(self, label=None, validators=None, format="%H:%M", **kwargs):
         super(TimeField, self).__init__(label, validators, format, **kwargs)
 
     def process_formdata(self, valuelist):
         if valuelist:
             try:
                 # Must be within the try/except
-                time_str = ' '.join(valuelist)
+                time_str = " ".join(valuelist)
             except Exception as e:
-                raise ValueError(self.gettext('Not a valid time value'))
+                raise ValueError(self.gettext("Not a valid time value"))
             try:
                 self.data = datetime.strptime(time_str, self.format).time()
             except ValueError:
                 self.data = None
-                raise ValueError(self.gettext('Not a valid time value'))
+                raise ValueError(self.gettext("Not a valid time value"))

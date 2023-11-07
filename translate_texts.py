@@ -16,14 +16,16 @@ import polib
 from os import path, sep, listdir
 
 # Module for translations
-from deep_translator import GoogleTranslator as Translator # $ pip install deep-translator
+from deep_translator import (
+    GoogleTranslator as Translator,
+)  # $ pip install deep-translator
 
 # Defining the root path to parse the files
 # TODO: must be updated if this script is not in the app root folder
-root_path = path.dirname(path.realpath(__file__)) + sep + 'app' + sep + 'translations'
+root_path = path.dirname(path.realpath(__file__)) + sep + "app" + sep + "translations"
 
 # Defining the source language
-src_lang = 'en'
+src_lang = "en"
 
 # Getting list of languages to be translated
 dst_langs = listdir(root_path)
@@ -31,7 +33,7 @@ dst_langs = listdir(root_path)
 # For each language to be translated
 for dst_lang in dst_langs:
     # Defining the PO file path
-    pofile_path = root_path + sep + dst_lang + sep + 'LC_MESSAGES' + sep + 'messages.po'
+    pofile_path = root_path + sep + dst_lang + sep + "LC_MESSAGES" + sep + "messages.po"
 
     # Opening  PO file
     pofile = polib.pofile(pofile_path)
@@ -44,11 +46,16 @@ for dst_lang in dst_langs:
     for entry in pofile:
         if entry.msgstr == "" or entry.fuzzy:
             # Translating the text entry and updating the entry's message string
-            entry.msgstr = Translator(source='en', target=dst_lang).translate(text=entry.msgid)
+            entry.msgstr = Translator(source="en", target=dst_lang).translate(
+                text=entry.msgid
+            )
             # Setting fuzzy flag as false if it was true
-            if entry.fuzzy: entry.flags.remove('fuzzy')
+            if entry.fuzzy:
+                entry.flags.remove("fuzzy")
             # Showing the current progress
-            print (f'Translation {idx}/{entries_count} ({dst_lang}): {entry.msgid} -> {entry.msgstr}')
+            print(
+                f"Translation {idx}/{entries_count} ({dst_lang}): {entry.msgid} -> {entry.msgstr}"
+            )
             # Going to the next index
             idx += 1
 

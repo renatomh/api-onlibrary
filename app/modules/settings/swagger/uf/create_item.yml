@@ -1,0 +1,64 @@
+Create a new UF
+This endpoint creates an UF in the database.
+---
+tags:
+  - uf
+
+security:
+  - Bearer: []
+
+post:
+  description: Create a new UF
+  consumes:
+    - application/json
+  produces:
+    - application/json
+  parameters:
+    - name: body
+      in: body
+      description: The resource to create
+      required: true
+      schema:
+        type: object
+        properties:
+          code:
+            type: string
+            example: DF
+          name:
+            type: string
+            example: Distrito Federal
+
+responses:
+  200:
+    description: Newly created item
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            created_at:
+              type: string
+              format: date-time
+              example: 2023-01-01T08:00:00-0300
+            updated_at:
+              type: string
+              format: date-time
+              example: 2023-01-03T10:00:00-0300
+            code:
+              type: string
+              example: DF
+            name:
+              type: string
+              example: Distrito Federal
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true

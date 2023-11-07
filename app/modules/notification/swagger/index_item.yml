@@ -1,0 +1,140 @@
+Get a list of notifications
+This endpoint retrieves a list of notifications.
+---
+tags:
+  - notifications
+
+security:
+  - Bearer: []
+
+parameters:
+  - name: limit
+    in: query
+    type: integer
+    required: false
+    description: The maximum number of items to retrieve.
+    example: 15
+
+  - name: page
+    in: query
+    type: string
+    required: false
+    description: Page number to retrieve items
+    example: 1
+
+  - name: filter
+    in: query
+    type: string
+    required: false
+    description: List of properties for filtering
+    example: '[{"property":"id","value":"","anyMatch":true,"joinOn":"and","operator":"=="}]'
+
+  - name: sort
+    in: query
+    type: string
+    required: false
+    description: List of properties for sorting
+    example: '[{"property":"id","direction":"ASC"}]'
+
+  - name: timezone
+    in: query
+    type: string
+    required: false
+    description: Timezone for request
+    example: America/Sao_Paulo
+
+responses:
+  200:
+    description: List of notifications
+
+    schema:
+      type: object
+
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              created_at:
+                type: string
+                format: date-time
+                example: 2023-01-01T08:00:00-0300
+              updated_at:
+                type: string
+                format: date-time
+                example: 2023-01-03T10:00:00-0300
+              title:
+                type: string
+              description:
+                type: string
+              web_action:
+                type: string
+              mobile_action:
+                type: string
+              read_at:
+                type: string
+                format: date-time
+                example: 2023-01-01T08:00:00-0300
+              user_id:
+                type: integer
+                example: 1
+              user:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: 2023-01-01T08:00:00-0300
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: 2023-01-03T10:00:00-0300
+                  name:
+                    type: string
+                  username:
+                    type: string
+                  email:
+                    type: string
+                  avatar_thumbnail_url:
+                    type: string
+                    example: null
+                  avatar_url:
+                    type: string
+                    example: null
+                  fcm_token:
+                    type: string
+                    example: null
+                  is_active:
+                    type: integer
+                    example: 1
+                  is_verified:
+                    type: integer
+                    example: 1
+                  last_login_at:
+                    type: string
+                    format: date-time
+                    example: null
+                  role_id:
+                    type: integer
+                    example: 3
+                  socketio_sid:
+                    type: string
+                    example: null
+              is_read:
+                type: integer
+                example: 1
+        meta:
+          type: object
+          properties:
+            success:
+              type: boolean
+            count:
+              type: integer
+              example: 1

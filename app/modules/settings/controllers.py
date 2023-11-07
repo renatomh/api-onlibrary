@@ -11,6 +11,9 @@ from flask import Blueprint, request, jsonify, g
 from flask_babel import _
 import os
 
+# Swagger documentation
+from flasgger import swag_from
+
 # Function to be called on 'eval', in order to join models relationships
 from sqlalchemy.orm import selectinload
 from sqlalchemy import or_
@@ -29,664 +32,500 @@ from app.modules.settings.forms import *
 
 # Import module models
 from app.modules.settings.models import *
-from app.modules.books.models import *
 
 # Utilities functions
-from app.modules.utils import get_sort_attrs, get_join_attrs, \
-    get_filter_attrs
+from app.modules.utils import get_sort_attrs, get_join_attrs, get_filter_attrs
 
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
-mod_library = Blueprint('libraries', __name__, url_prefix='/libraries')
-mod_city = Blueprint('cities', __name__, url_prefix='/cities')
-mod_country = Blueprint('countries', __name__, url_prefix='/countries')
+mod_uf = Blueprint("ufs", __name__, url_prefix="/ufs")
+mod_city = Blueprint("cities", __name__, url_prefix="/cities")
+
 
 # Set the route and accepted methods
-@mod_library.route('', methods=['GET'])
+@mod_uf.route("", methods=["GET"])
 @ensure_authorized
-def index_library():
-    # For GET method
-    if request.method == 'GET':
-        # Pagination
-        page = request.args.get('page', default=1, type=int)
-        limit = request.args.get('limit', default=25, type=int)
-        # Setting up a maximum number of results per page, even if limit exceeds it
-        max_per_page = 250
-        # Filtering and sorting
-        filter = request.args.get('filter', default='[]', type=str)
-        sort = request.args.get('sort', default='[]', type=str)
-        # Query timezone
-        timezone = request.args.get('timezone', default=os.getenv('TZ', 'UTC'), type=str)
-        try: q_tz = pytz.timezone(timezone)
-        except: q_tz = pytz.timezone(os.getenv('TZ', 'UTC'))
+@swag_from("swagger/uf/index_item.yml")
+def index_uf():
+    # Pagination
+    page = request.args.get("page", default=1, type=int)
+    limit = request.args.get("limit", default=25, type=int)
+    # Setting up a maximum number of results per page, even if limit exceeds it
+    max_per_page = 250
+    # Filtering and sorting
+    filter = request.args.get("filter", default="[]", type=str)
+    sort = request.args.get("sort", default="[]", type=str)
+    # Query timezone
+    timezone = request.args.get("timezone", default=os.getenv("TZ", "UTC"), type=str)
+    try:
+        q_tz = pytz.timezone(timezone)
+    except:
+        q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-        # Defining the class for the data model, must be updated for different models
-        model = Library
-        selectinloads = eval(''.join(f'selectinload({r}), ' for r in list(model.__mapper__.relationships)))
+    # Defining the class for the data model, must be updated for different models
+    model = UF
 
-        # Trying to obtain data from models
+    # Trying to obtain data from models
+    try:
+        # Retrieving the sorting attributes
+        sort_attrs = get_sort_attrs(model, sort)
+        # Retrieving the join relationship models
+        join_attrs = get_join_attrs(model, filter, sort)
+        # Retrieving the filtering attributes
+        filter_attrs = get_filter_attrs(model, filter, q_tz)
+
+        # Searching itens by filters and sorting
+        if len(join_attrs) > 0:
+            # If joins are required
+            res = (
+                model.query.join(*join_attrs)
+                .filter(*filter_attrs)
+                .order_by(*sort_attrs)
+                .paginate(page, limit, False, max_per_page)
+            )
+        else:
+            # If joins are not required
+            res = (
+                model.query.filter(*filter_attrs)
+                .order_by(*sort_attrs)
+                .paginate(page, limit, False, max_per_page)
+            )
+        data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
+
+        # Returning data and meta
+        return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
+    # If something goes wrong
+    except Exception as e:
+        return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
+
+
+# Set the route and accepted methods
+@mod_uf.route("", methods=["POST"])
+@ensure_authorized
+@swag_from("swagger/uf/create_item.yml")
+def create_uf():
+    # If data form is submitted
+    form = CreateUFForm.from_json(request.json)
+
+    # If something goes wrong when validating provided data
+    if not form.validate():
+        # Returning the data to the request
+        return (
+            jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
+            400,
+        )
+
+    # Creating the session for database communication
+    with AppSession() as session:
+        # Checking if field is already in use
+        if session.query(UF).filter_by(code=form.code.data).first():
+            return (
+                jsonify(
+                    {
+                        "data": [],
+                        "meta": {
+                            "success": False,
+                            "errors": _("This code is already in use."),
+                        },
+                    }
+                ),
+                400,
+            )
         try:
-            # Retrieving the sorting attributes
-            sort_attrs = get_sort_attrs(model, sort)
-            # Retrieving the join relationship models
-            join_attrs = get_join_attrs(model, filter)
-            # Retrieving the filtering attributes
-            filter_attrs = get_filter_attrs(model, filter, q_tz)
-
-            # Searching itens by filters and sorting
-            if (len(join_attrs) > 0):
-                # If joins are required
-                res = model.query.options(selectinloads).join(*join_attrs).filter(
-                    *filter_attrs).order_by(*sort_attrs).paginate(page, limit, False, max_per_page)
-            else:
-                # If joins are not required
-                res = model.query.options(selectinloads).filter(*filter_attrs).order_by(
-                    *sort_attrs).paginate(page, limit, False, max_per_page)
-            data = [r.as_dict(q_tz)
-                    for r in res.items] if len(res.items) > 0 else []
-
-            # Returning data and meta
-            return jsonify({"data": data,
-                            "meta": {"success": True,
-                                     "count": res.total}})
-        # If something goes wrong
+            # Creating new item
+            item = UF(**request.json)
+            session.add(item)
+            session.flush()
+            session.commit()
+            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
+        # If an error occurrs
         except Exception as e:
-            return jsonify({"data": {},
-                            "meta": {"success": False,
-                                     "errors": str(e)}}), 500
+            session.rollback()
+            return (
+                jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
+                500,
+            )
+
 
 # Set the route and accepted methods
-@mod_library.route('', methods=['POST'])
+@mod_uf.route("/<int:id>", methods=["GET"])
 @ensure_authorized
-def create_library():
-    # For POST method
-    if request.method == 'POST':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # If data form is submitted
-            form = CreateLibraryForm.from_json(request.json)
+@swag_from("swagger/uf/get_item_by_id.yml")
+def get_uf_by_id(id):
+    # Creating the session for database communication
+    with AppSession() as session:
+        # Searching item by ID
+        item = session.query(UF).get(id)
 
-            # Validating provided data
-            if form.validate():
-                # Checking if field is already in use
-                if session.query(Library).filter_by(name=form.name.data).first():
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": _("This name is already in use.")}}), 400
-                try:
-                    # Checking if city exists
-                    if form.city_id.data and session.query(City).get(form.city_id.data) is None:
-                        return jsonify({"data": [],
-                                        "meta": {"success": False,
-                                                "errors": _("No city found")}}), 400
-                    # Creating new item
-                    item = Library(
-                        name=form.name.data,
-                        cnpj=form.cnpj.data if form.cnpj.data is not None else None,
-                        cpf=form.cpf.data if form.cpf.data is not None else None,
-                        city_id=form.city_id.data if form.city_id.data is not None else None,
-                        )
-                    session.add(item)
-                    session.flush()
-                    session.commit()
-                    return jsonify({"data": item.as_dict(),
-                                    "meta": {"success": True}})
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-            
-            # If something goes wrong
-            else:
-                # Returning the data to the request
-                return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": form.errors}}), 400
+        # If item is found
+        if item:
+            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
+
+        # If no item is found
+        return (
+            jsonify(
+                {"data": [], "meta": {"success": False, "errors": _("No item found")}}
+            ),
+            404,
+        )
+
 
 # Set the route and accepted methods
-@mod_library.route('/<int:id>', methods=['GET'])
+@mod_uf.route("/<int:id>", methods=["PUT"])
 @ensure_authorized
-def get_library_by_id(id):
-    # For GET method
-    if request.method == 'GET':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # Getting the model
-            model = Library
-            selectinloads = eval(''.join(f'selectinload({r}), ' for r in list(model.__mapper__.relationships)))
+@swag_from("swagger/uf/update_item.yml")
+def update_uf(id):
+    # If data form is submitted
+    form = UpdateUFForm.from_json(request.json)
 
-            # Searching item by ID
-            item = session.query(model).options(selectinloads).get(id)
+    # If something goes wrong when validating provided data
+    if not form.validate():
+        # Returning the data to the request
+        return (
+            jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
+            400,
+        )
 
-            # If item is found
-            if item:
-                return jsonify({"data": item.as_dict(),
-                                "meta": {"success": True}})
-            
-            # If no item is found
-            return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": _("No item found")}}), 400
+    # Creating the session for database communication
+    with AppSession() as session:
+        # Getting the item to be updated
+        item = session.query(UF).get(id)
+        # If no item is found
+        if not item:
+            return (
+                jsonify(
+                    {
+                        "data": [],
+                        "meta": {"success": False, "errors": _("No item found")},
+                    }
+                ),
+                404,
+            )
+
+        # Updating the item
+        if form.code.data is not None:
+            if form.code.data != item.code:
+                # Checking if field is not already in use
+                if session.query(UF).filter_by(code=form.code.data).first():
+                    return (
+                        jsonify(
+                            {
+                                "data": [],
+                                "meta": {
+                                    "success": False,
+                                    "errors": _("This code is already in use."),
+                                },
+                            }
+                        ),
+                        400,
+                    )
+                else:
+                    item.code = form.code.data
+        if form.name.data is not None:
+            item.name = form.name.data
+
+        try:
+            session.commit()
+            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
+
+        # If an error occurrs
+        except Exception as e:
+            session.rollback()
+            return (
+                jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
+                500,
+            )
+
 
 # Set the route and accepted methods
-@mod_library.route('/<int:id>', methods=['PUT'])
+@mod_uf.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
-def update_library(id):
-    # For PUT method
-    if request.method == 'PUT':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # If data form is submitted
-            form = UpdateLibraryForm.from_json(request.json)
+@swag_from("swagger/uf/delete_item.yml")
+def delete_uf(id):
+    # Creating the session for database communication
+    with AppSession() as session:
+        # Searching item by ID
+        item = session.query(UF).get(id)
 
-            # Validating provided data
-            if form.validate():
-                try:
-                    # Updating the item
-                    item = session.query(Library).get(id)
-                    if item:
-                        if form.name.data is not None:
-                            if form.name.data != item.name:
-                                # Checking if field is not already in use
-                                if session.query(Library).filter_by(name=form.name.data).first():
-                                    return jsonify({"data": [],
-                                        "meta": {"success": False,
-                                                "errors": _("This name is already in use.")}}), 400
-                                else:
-                                    item.name=form.name.data
-                        if form.cnpj.data is not None:
-                            item.cnpj=form.cnpj.data
-                        if form.cpf.data is not None:
-                            item.cpf=form.cpf.data
-                        if form.city_id.data is not None:
-                            # Checking if city exists
-                            if form.city_id.data and session.query(City).get(form.city_id.data) is None:
-                                return jsonify({"data": [],
-                                                "meta": {"success": False,
-                                                        "errors": _("No city found")}}), 400
-                            item.city_id=form.city_id.data
-                        try:
-                            session.commit()
-                            return jsonify({"data": item.as_dict(),
-                                            "meta": {"success": True}})
+        # If no item is found
+        if not item:
+            return (
+                jsonify(
+                    {
+                        "data": [],
+                        "meta": {"success": False, "errors": _("No item found")},
+                    }
+                ),
+                404,
+            )
 
-                        # If something goes wrong while committing
-                        except Exception as e:
-                            session.rollback()
-                            # Returning the data to the request
-                            return jsonify({"data": [],
-                                            "meta": {"success": False,
-                                                    "errors": str(e)}}), 500
+        # If the item is found
+        # Checking if there are relationships defined for the item
+        # TODO: check for newly created relationships
+        if City.query.filter(City.uf_id == id).first() is not None:
+            return (
+                jsonify(
+                    {
+                        "data": [],
+                        "meta": {
+                            "success": False,
+                            "errors": _(
+                                "There are other items associated with this item"
+                            ),
+                        },
+                    }
+                ),
+                400,
+            )
+        try:
+            session.delete(item)
+            session.commit()
+            return jsonify({"data": "", "meta": {"success": True}}), 204
+        # If an error occurrs
+        except Exception as e:
+            session.rollback()
+            return (
+                jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
+                500,
+            )
 
-                    # If no item is found
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": _("No item found")}}), 400
-
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-
-            # If something goes wrong
-            else:
-                # Returning the data to the request
-                return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": form.errors}}), 400
 
 # Set the route and accepted methods
-@mod_library.route('/<int:id>', methods=['DELETE'])
+@mod_city.route("", methods=["GET"])
 @ensure_authorized
-def delete_library(id):
-    # For DELETE method
-    if request.method == 'DELETE':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # Searching item by ID
-            item = session.query(Library).filter_by(id=id).first()
-
-            # If the item is found
-            if item:
-                try:
-                    session.delete(item)
-                    session.commit()
-                    return jsonify({"data": '',
-                                    "meta": {"success": True}}), 204
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-
-            # If no item is found
-            return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": _("No item found")}}), 400
-
-# Set the route and accepted methods
-@mod_city.route('', methods=['GET'])
-@ensure_authenticated
+@swag_from("swagger/city/index_item.yml")
 def index_city():
-    # For GET method
-    if request.method == 'GET':
-        # Pagination
-        page = request.args.get('page', default=1, type=int)
-        limit = request.args.get('limit', default=25, type=int)
-        # Setting up a maximum number of results per page, even if limit exceeds it
-        max_per_page = 250
-        # Filtering and sorting
-        filter = request.args.get('filter', default='[]', type=str)
-        sort = request.args.get('sort', default='[]', type=str)
-        # Query timezone
-        timezone = request.args.get('timezone', default=os.getenv('TZ', 'UTC'), type=str)
-        try: q_tz = pytz.timezone(timezone)
-        except: q_tz = pytz.timezone(os.getenv('TZ', 'UTC'))
+    # Pagination
+    page = request.args.get("page", default=1, type=int)
+    limit = request.args.get("limit", default=25, type=int)
+    # Setting up a maximum number of results per page, even if limit exceeds it
+    max_per_page = 250
+    # Filtering and sorting
+    filter = request.args.get("filter", default="[]", type=str)
+    sort = request.args.get("sort", default="[]", type=str)
+    # Query timezone
+    timezone = request.args.get("timezone", default=os.getenv("TZ", "UTC"), type=str)
+    try:
+        q_tz = pytz.timezone(timezone)
+    except:
+        q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-        # Defining the class for the data model, must be updated for different models
-        model = City
-        selectinloads = eval(''.join(f'selectinload({r}), ' for r in list(model.__mapper__.relationships)))
+    # Defining the class for the data model, must be updated for different models
+    model = City
+    # Getting the model relationships and evaluating the call string in order to load the relationships
+    selectinloads = eval(
+        "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
+    )
 
-        # Trying to obtain data from models
-        try:
-            # Retrieving the sorting attributes
-            sort_attrs = get_sort_attrs(model, sort)
-            # Retrieving the join relationship models
-            join_attrs = get_join_attrs(model, filter)
-            # Retrieving the filtering attributes
-            filter_attrs = get_filter_attrs(model, filter, q_tz)
+    # Trying to obtain data from models
+    try:
+        # Retrieving the sorting attributes
+        sort_attrs = get_sort_attrs(model, sort)
+        # Retrieving the join relationship models
+        join_attrs = get_join_attrs(model, filter, sort)
+        # Retrieving the filtering attributes
+        filter_attrs = get_filter_attrs(model, filter, q_tz)
 
-            # Searching itens by filters and sorting
-            if (len(join_attrs) > 0):
-                # If joins are required
-                res = model.query.options(selectinloads).join(*join_attrs).filter(
-                    *filter_attrs).order_by(*sort_attrs).paginate(page, limit, False, max_per_page)
-            else:
-                # If joins are not required
-                res = model.query.options(selectinloads).filter(*filter_attrs).order_by(
-                    *sort_attrs).paginate(page, limit, False, max_per_page)
-            data = [r.as_dict(q_tz)
-                    for r in res.items] if len(res.items) > 0 else []
+        # Searching itens by filters and sorting
+        if len(join_attrs) > 0:
+            # If joins are required
+            res = (
+                model.query.options(selectinloads)
+                .join(*join_attrs)
+                .filter(*filter_attrs)
+                .order_by(*sort_attrs)
+                .paginate(page, limit, False, max_per_page)
+            )
+        else:
+            # If joins are not required
+            res = (
+                model.query.options(selectinloads)
+                .filter(*filter_attrs)
+                .order_by(*sort_attrs)
+                .paginate(page, limit, False, max_per_page)
+            )
+        data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-            # Returning data and meta
-            return jsonify({"data": data,
-                            "meta": {"success": True,
-                                     "count": res.total}})
-        # If something goes wrong
-        except Exception as e:
-            return jsonify({"data": {},
-                            "meta": {"success": False,
-                                     "errors": str(e)}}), 500
+        # Returning data and meta
+        return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
+    # If something goes wrong
+    except Exception as e:
+        return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
+
 
 # Set the route and accepted methods
-@mod_city.route('', methods=['POST'])
+@mod_city.route("", methods=["POST"])
 @ensure_authorized
+@swag_from("swagger/city/create_item.yml")
 def create_city():
-    # For POST method
-    if request.method == 'POST':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # If data form is submitted
-            form = CreateCityForm.from_json(request.json)
+    # If data form is submitted
+    form = CreateCityForm.from_json(request.json)
 
-            # Validating provided data
-            if form.validate():
-                try:
-                    # Checking if country exists
-                    if form.country_id.data and session.query(Country).get(form.country_id.data) is None:
-                        return jsonify({"data": [],
-                                        "meta": {"success": False,
-                                                "errors": _("No country found")}}), 400
-                    # Creating new item
-                    item = City(
-                        name=form.name.data,
-                        uf=form.uf.data,
-                        country_id=form.country_id.data if form.country_id.data is not None else None,
-                        )
-                    session.add(item)
-                    session.flush()
-                    session.commit()
-                    return jsonify({"data": item.as_dict(),
-                                    "meta": {"success": True}})
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-            
-            # If something goes wrong
-            else:
-                # Returning the data to the request
-                return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": form.errors}}), 400
+    # If something goes wrong when validating provided data
+    if not form.validate():
+        # Returning the data to the request
+        return (
+            jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
+            400,
+        )
 
-# Set the route and accepted methods
-@mod_city.route('/<int:id>', methods=['GET'])
-@ensure_authenticated
-def get_city_by_id(id):
-    # For GET method
-    if request.method == 'GET':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # Getting the model
-            model = City
-            selectinloads = eval(''.join(f'selectinload({r}), ' for r in list(model.__mapper__.relationships)))
-
-            # Searching item by ID
-            item = session.query(model).options(selectinloads).get(id)
-
-            # If item is found
-            if item:
-                return jsonify({"data": item.as_dict(),
-                                "meta": {"success": True}})
-            
-            # If no item is found
-            return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": _("No item found")}}), 400
-
-# Set the route and accepted methods
-@mod_city.route('/<int:id>', methods=['PUT'])
-@ensure_authorized
-def update_city(id):
-    # For PUT method
-    if request.method == 'PUT':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # If data form is submitted
-            form = UpdateCityForm.from_json(request.json)
-
-            # Validating provided data
-            if form.validate():
-                try:
-                    # Updating the item
-                    item = session.query(City).get(id)
-                    if item:
-                        if form.name.data is not None:
-                            item.name=form.name.data
-                        if form.uf.data is not None:
-                            item.uf=form.uf.data
-                        if form.country_id.data is not None:
-                            item.country_id=form.country_id.data
-                        try:
-                            session.commit()
-                            return jsonify({"data": item.as_dict(),
-                                            "meta": {"success": True}})
-
-                        # If something goes wrong while committing
-                        except Exception as e:
-                            session.rollback()
-                            # Returning the data to the request
-                            return jsonify({"data": [],
-                                            "meta": {"success": False,
-                                                    "errors": str(e)}}), 500
-
-                    # If no item is found
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": _("No item found")}}), 400
-
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-
-            # If something goes wrong
-            else:
-                # Returning the data to the request
-                return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": form.errors}}), 400
-
-# Set the route and accepted methods
-@mod_city.route('/<int:id>', methods=['DELETE'])
-@ensure_authorized
-def delete_city(id):
-    # For DELETE method
-    if request.method == 'DELETE':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # Searching item by ID
-            item = session.query(City).filter_by(id=id).first()
-
-            # If the item is found
-            if item:
-                try:
-                    session.delete(item)
-                    session.commit()
-                    return jsonify({"data": '',
-                                    "meta": {"success": True}}), 204
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-
-            # If no item is found
-            return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": _("No item found")}}), 400
-
-# Set the route and accepted methods
-@mod_country.route('', methods=['GET'])
-@ensure_authenticated
-def index_country():
-    # For GET method
-    if request.method == 'GET':
-        # Pagination
-        page = request.args.get('page', default=1, type=int)
-        limit = request.args.get('limit', default=25, type=int)
-        # Setting up a maximum number of results per page, even if limit exceeds it
-        max_per_page = 250
-        # Filtering and sorting
-        filter = request.args.get('filter', default='[]', type=str)
-        sort = request.args.get('sort', default='[]', type=str)
-        # Query timezone
-        timezone = request.args.get('timezone', default=os.getenv('TZ', 'UTC'), type=str)
-        try: q_tz = pytz.timezone(timezone)
-        except: q_tz = pytz.timezone(os.getenv('TZ', 'UTC'))
-
-        # Defining the class for the data model, must be updated for different models
-        model = Country
-        selectinloads = eval(''.join(f'selectinload({r}), ' for r in list(model.__mapper__.relationships)))
-
-        # Trying to obtain data from models
+    # Creating the session for database communication
+    with AppSession() as session:
+        # Checking if UF exists
+        if session.query(UF).get(form.uf_id.data) is None:
+            return (
+                jsonify(
+                    {
+                        "data": [],
+                        "meta": {"success": False, "errors": _("No UF found")},
+                    }
+                ),
+                404,
+            )
         try:
-            # Retrieving the sorting attributes
-            sort_attrs = get_sort_attrs(model, sort)
-            # Retrieving the join relationship models
-            join_attrs = get_join_attrs(model, filter)
-            # Retrieving the filtering attributes
-            filter_attrs = get_filter_attrs(model, filter, q_tz)
-
-            # Searching itens by filters and sorting
-            if (len(join_attrs) > 0):
-                # If joins are required
-                res = model.query.options(selectinloads).join(*join_attrs).filter(
-                    *filter_attrs).order_by(*sort_attrs).paginate(page, limit, False, max_per_page)
-            else:
-                # If joins are not required
-                res = model.query.options(selectinloads).filter(*filter_attrs).order_by(
-                    *sort_attrs).paginate(page, limit, False, max_per_page)
-            data = [r.as_dict(q_tz)
-                    for r in res.items] if len(res.items) > 0 else []
-
-            # Returning data and meta
-            return jsonify({"data": data,
-                            "meta": {"success": True,
-                                     "count": res.total}})
-        # If something goes wrong
+            # Creating new item
+            item = City(**request.json)
+            session.add(item)
+            session.flush()
+            session.commit()
+            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
+        # If an error occurrs
         except Exception as e:
-            return jsonify({"data": {},
-                            "meta": {"success": False,
-                                     "errors": str(e)}}), 500
+            session.rollback()
+            return (
+                jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
+                500,
+            )
+
 
 # Set the route and accepted methods
-@mod_country.route('', methods=['POST'])
+@mod_city.route("/<int:id>", methods=["GET"])
 @ensure_authorized
-def create_country():
-    # For POST method
-    if request.method == 'POST':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # If data form is submitted
-            form = CreateCountryForm.from_json(request.json)
+@swag_from("swagger/city/get_item_by_id.yml")
+def get_city_by_id(id):
+    # Creating the session for database communication
+    with AppSession() as session:
+        # Getting the model
+        model = City
+        selectinloads = eval(
+            "".join(
+                f"selectinload({r}), " for r in list(model.__mapper__.relationships)
+            )
+        )
 
-            # Validating provided data
-            if form.validate():
-                # Checking if field is already in use
-                if session.query(Country).filter_by(name=form.name.data).first():
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": _("This name is already in use.")}}), 400
-                try:
-                    # Creating new item
-                    item = Country(
-                        name=form.name.data,
-                        code=form.code.data,
-                        )
-                    session.add(item)
-                    session.flush()
-                    session.commit()
-                    return jsonify({"data": item.as_dict(),
-                                    "meta": {"success": True}})
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-            
-            # If something goes wrong
+        # Searching item by ID
+        item = session.query(model).options(selectinloads).get(id)
+
+        # If item is found
+        if item:
+            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
+
+        # If no item is found
+        return (
+            jsonify(
+                {"data": [], "meta": {"success": False, "errors": _("No item found")}}
+            ),
+            404,
+        )
+
+
+# Set the route and accepted methods
+@mod_city.route("/<int:id>", methods=["PUT"])
+@ensure_authorized
+@swag_from("swagger/city/update_item.yml")
+def update_city(id):
+    # If data form is submitted
+    form = UpdateCityForm.from_json(request.json)
+
+    # If something goes wrong when validating provided data
+    if not form.validate():
+        # Returning the data to the request
+        return (
+            jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
+            400,
+        )
+
+    # Creating the session for database communication
+    with AppSession() as session:
+        # Getting the item to be updated
+        item = session.query(City).get(id)
+        # If no item is found
+        if not item:
+            return (
+                jsonify(
+                    {
+                        "data": [],
+                        "meta": {"success": False, "errors": _("No item found")},
+                    }
+                ),
+                404,
+            )
+
+        # Updating the item
+        # If a new UF was provided
+        if form.uf_id.data:
+            # Checking if UF exists
+            uf = session.query(UF).get(form.uf_id.data)
+            if uf is None:
+                return (
+                    jsonify(
+                        {
+                            "data": [],
+                            "meta": {"success": False, "errors": _("No UF found")},
+                        }
+                    ),
+                    400,
+                )
             else:
-                # Returning the data to the request
-                return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": form.errors}}), 400
+                item.uf_id = form.uf_id.data
+        if form.name.data is not None:
+            item.name = form.name.data
+
+        try:
+            session.commit()
+            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
+
+        # If an error occurrs
+        except Exception as e:
+            session.rollback()
+            return (
+                jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
+                500,
+            )
+
 
 # Set the route and accepted methods
-@mod_country.route('/<int:id>', methods=['GET'])
-@ensure_authenticated
-def get_country_by_id(id):
-    # For GET method
-    if request.method == 'GET':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # Searching item by ID
-            item = session.query(Country).get(id)
-
-            # If item is found
-            if item:
-                return jsonify({"data": item.as_dict(),
-                                "meta": {"success": True}})
-            
-            # If no item is found
-            return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": _("No item found")}}), 400
-
-# Set the route and accepted methods
-@mod_country.route('/<int:id>', methods=['PUT'])
+@mod_city.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
-def update_country(id):
-    # For PUT method
-    if request.method == 'PUT':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # If data form is submitted
-            form = UpdateCountryForm.from_json(request.json)
+@swag_from("swagger/city/delete_item.yml")
+def delete_city(id):
+    # Creating the session for database communication
+    with AppSession() as session:
+        # Searching item by ID
+        item = session.query(City).get(id)
 
-            # Validating provided data
-            if form.validate():
-                try:
-                    # Updating the item
-                    item = session.query(Country).get(id)
-                    if item:
-                        if form.name.data is not None:
-                            if form.name.data != item.name:
-                                # Checking if name is not already in use
-                                if session.query(Country).filter_by(name=form.name.data).first():
-                                    return jsonify({"data": [],
-                                        "meta": {"success": False,
-                                                "errors": _("This name is already in use.")}}), 400
-                                else:
-                                    item.name=form.name.data
-                        if form.code.data is not None:
-                            item.code=form.code.data
-                        try:
-                            session.commit()
-                            return jsonify({"data": item.as_dict(),
-                                            "meta": {"success": True}})
+        # If no item is found
+        if not item:
+            return (
+                jsonify(
+                    {
+                        "data": [],
+                        "meta": {"success": False, "errors": _("No item found")},
+                    }
+                ),
+                404,
+            )
 
-                        # If something goes wrong while committing
-                        except Exception as e:
-                            session.rollback()
-                            # Returning the data to the request
-                            return jsonify({"data": [],
-                                            "meta": {"success": False,
-                                                    "errors": str(e)}}), 500
-
-                    # If no item is found
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": _("No item found")}}), 400
-
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-
-            # If something goes wrong
-            else:
-                # Returning the data to the request
-                return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": form.errors}}), 400
-
-# Set the route and accepted methods
-@mod_country.route('/<int:id>', methods=['DELETE'])
-@ensure_authorized
-def delete_country(id):
-    # For DELETE method
-    if request.method == 'DELETE':
-        # Creating the session for database communication
-        with AppSession() as session:
-            # Searching item by ID
-            item = session.query(Country).filter_by(id=id).first()
-
-            # If the item is found
-            if item:
-                # Checking if there are relationships defined for the item
-                if City.query.filter(City.country_id==id).first() is not None or \
-                    Author.query.filter(Author.country_id==id).first() is not None or \
-                    Publisher.query.filter(Publisher.country_id==id).first() is not None:
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": _("There are other items associated with this item")}}), 400
-                try:
-                    session.delete(item)
-                    session.commit()
-                    return jsonify({"data": '',
-                                    "meta": {"success": True}}), 204
-                # If an error occurrs
-                except Exception as e:
-                    session.rollback()
-                    return jsonify({"data": [],
-                                    "meta": {"success": False,
-                                            "errors": str(e)}}), 500
-
-            # If no item is found
-            return jsonify({"data": [],
-                                "meta": {"success": False,
-                                        "errors": _("No item found")}}), 400
+        # If the item is found
+        # Checking if there are relationships defined for the item
+        # TODO: check for newly created relationships
+        try:
+            session.delete(item)
+            session.commit()
+            return jsonify({"data": "", "meta": {"success": True}}), 204
+        # If an error occurrs
+        except Exception as e:
+            session.rollback()
+            return (
+                jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
+                500,
+            )
