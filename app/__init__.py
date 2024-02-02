@@ -391,7 +391,7 @@ def not_found(error):
 
 
 @app.errorhandler(413)
-def ratelimit_handler(e):
+def content_size_handler(e):
     return (
         jsonify(
             {
