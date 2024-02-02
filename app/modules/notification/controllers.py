@@ -415,7 +415,7 @@ def set_read_notification(id):
 
 
 # Set the route and accepted methods
-@mod_notification.route("/read_all", methods=["PUT"])
+@mod_notification.route("/read-all", methods=["PUT"])
 @ensure_authenticated
 @swag_from("swagger/read_all_notifications.yml")
 def read_all_notifications():

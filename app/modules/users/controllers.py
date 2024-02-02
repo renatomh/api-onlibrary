@@ -73,13 +73,13 @@ mod_profile = Blueprint("profile", __name__, url_prefix="/profile")
 mod_user = Blueprint("users", __name__, url_prefix="/users")
 mod_role = Blueprint("roles", __name__, url_prefix="/roles")
 mod_role_api_route = Blueprint(
-    "role_api_routes", __name__, url_prefix="/role_api_routes"
+    "role_api_routes", __name__, url_prefix="/role-api-routes"
 )
 mod_role_web_action = Blueprint(
-    "role_web_actions", __name__, url_prefix="/role_web_actions"
+    "role_web_actions", __name__, url_prefix="/role-web-actions"
 )
 mod_role_mobile_action = Blueprint(
-    "role_mobile_actions", __name__, url_prefix="/role_mobile_actions"
+    "role_mobile_actions", __name__, url_prefix="/role-mobile-actions"
 )
 
 
@@ -1842,36 +1842,6 @@ def create_role_api_route():
 
 
 # Set the route and accepted methods
-@mod_role_api_route.route("/<int:id>", methods=["GET"])
-@ensure_authorized
-def get_role_api_route_by_id(id):
-    # Creating the session for database communication
-    with AppSession() as session:
-        # Defining the class for the data model, must be updated for different models
-        model = RoleAPIRoute
-        selectinloads = eval(
-            "".join(
-                f"selectinload({r}), " for r in list(model.__mapper__.relationships)
-            )
-        )
-
-        # Searching item by ID
-        item = session.query(model).options(selectinloads).get(id)
-
-        # If item is found
-        if item:
-            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-
-        # If no item is found
-        return (
-            jsonify(
-                {"data": [], "meta": {"success": False, "errors": _("No item found")}}
-            ),
-            404,
-        )
-
-
-# Set the route and accepted methods
 @mod_role_api_route.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_role_api_route(id):
@@ -2039,36 +2009,6 @@ def create_role_web_action():
 
 
 # Set the route and accepted methods
-@mod_role_web_action.route("/<int:id>", methods=["GET"])
-@ensure_authorized
-def get_role_web_action_by_id(id):
-    # Creating the session for database communication
-    with AppSession() as session:
-        # Defining the class for the data model, must be updated for different models
-        model = RoleWebAction
-        selectinloads = eval(
-            "".join(
-                f"selectinload({r}), " for r in list(model.__mapper__.relationships)
-            )
-        )
-
-        # Searching item by ID
-        item = session.query(model).options(selectinloads).get(id)
-
-        # If item is found
-        if item:
-            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-
-        # If no item is found
-        return (
-            jsonify(
-                {"data": [], "meta": {"success": False, "errors": _("No item found")}}
-            ),
-            404,
-        )
-
-
-# Set the route and accepted methods
 @mod_role_web_action.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_role_web_action(id):
@@ -2233,36 +2173,6 @@ def create_role_mobile_action():
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
-
-
-# Set the route and accepted methods
-@mod_role_mobile_action.route("/<int:id>", methods=["GET"])
-@ensure_authorized
-def get_role_mobile_action_by_id(id):
-    # Creating the session for database communication
-    with AppSession() as session:
-        # Defining the class for the data model, must be updated for different models
-        model = RoleMobileAction
-        selectinloads = eval(
-            "".join(
-                f"selectinload({r}), " for r in list(model.__mapper__.relationships)
-            )
-        )
-
-        # Searching item by ID
-        item = session.query(model).options(selectinloads).get(id)
-
-        # If item is found
-        if item:
-            return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-
-        # If no item is found
-        return (
-            jsonify(
-                {"data": [], "meta": {"success": False, "errors": _("No item found")}}
-            ),
-            404,
-        )
 
 
 # Set the route and accepted methods

@@ -53,14 +53,14 @@ from app.modules.document.utils import notify_document_expiration
 
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
 mod_document_category = Blueprint(
-    "document_categories", __name__, url_prefix="/document_categories"
+    "document_categories", __name__, url_prefix="/document-categories"
 )
 mod_document = Blueprint("documents", __name__, url_prefix="/documents")
 mod_document_model = Blueprint(
-    "document_models", __name__, url_prefix="/document_models"
+    "document_models", __name__, url_prefix="/document-models"
 )
 mod_document_sharing = Blueprint(
-    "document_sharings", __name__, url_prefix="/document_sharings"
+    "document_sharings", __name__, url_prefix="/document-sharings"
 )
 
 

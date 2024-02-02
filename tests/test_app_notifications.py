@@ -197,7 +197,7 @@ def test_notifications(client, app):
 
     # Now, we'll set all notifications as read
     client.put(
-        "/notifications/read_all",
+        "/notifications/read-all",
         headers=headers,
     )
 

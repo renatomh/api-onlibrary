@@ -71,7 +71,7 @@ def test_document_categories(client):
 
     # Creating a new document category
     response = client.post(
-        "/document_categories", headers=headers, json=document_categories_data[0]
+        "/document-categories", headers=headers, json=document_categories_data[0]
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
@@ -80,7 +80,7 @@ def test_document_categories(client):
 
     # Trying to create a new document category with an already existing code
     response = client.post(
-        "/document_categories",
+        "/document-categories",
         headers=headers,
         json={
             "code": document_category1["code"],
@@ -92,7 +92,7 @@ def test_document_categories(client):
 
     # Creating another document category
     response = client.post(
-        "/document_categories", headers=headers, json=document_categories_data[1]
+        "/document-categories", headers=headers, json=document_categories_data[1]
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
@@ -101,7 +101,7 @@ def test_document_categories(client):
 
     # Updating the created document category
     response = client.put(
-        f'/document_categories/{document_category1["id"]}',
+        f'/document-categories/{document_category1["id"]}',
         headers=headers,
         json={
             "code": "Updated DC Code",
@@ -113,7 +113,7 @@ def test_document_categories(client):
 
     # Updating the first created document category with a repeated document category's code
     response = client.put(
-        f'/document_categories/{document_category1["id"]}',
+        f'/document-categories/{document_category1["id"]}',
         headers=headers,
         json={
             "code": document_category2["code"],
@@ -125,7 +125,7 @@ def test_document_categories(client):
 
     # Deleting the created document category
     response = client.delete(
-        f'/document_categories/{document_category1["id"]}', headers=headers
+        f'/document-categories/{document_category1["id"]}', headers=headers
     )
     assert response.status_code == 204
 
@@ -135,7 +135,7 @@ def test_document_categories(client):
 
     # Trying to delete an non existing document category
     response = client.delete(
-        f'/document_categories/{document_category1["id"]}', headers=headers
+        f'/document-categories/{document_category1["id"]}', headers=headers
     )
     assert response.status_code == 404
     assert not response.json["meta"]["success"]
@@ -162,7 +162,7 @@ def test_documents(client):
     test_document_categories = []
     for document_category_data in document_categories_data:
         response = client.post(
-            "/document_categories", headers=headers, json=document_category_data
+            "/document-categories", headers=headers, json=document_category_data
         )
         assert response.status_code == 200
         assert response.json["meta"]["success"]
@@ -402,7 +402,7 @@ def test_documents(client):
     # Here, we'll try to delete a document category which has a document associated to it
     # To check if it will fail
     response = client.delete(
-        f'/document_categories/{test_document_categories[0]["id"]}', headers=headers
+        f'/document-categories/{test_document_categories[0]["id"]}', headers=headers
     )
     assert response.status_code == 400
     assert not response.json["meta"]["success"]
@@ -447,7 +447,7 @@ def test_document_models(client):
     test_document_categories = []
     for document_category_data in document_categories_data:
         response = client.post(
-            "/document_categories", headers=headers, json=document_category_data
+            "/document-categories", headers=headers, json=document_category_data
         )
         assert response.status_code == 200
         assert response.json["meta"]["success"]
@@ -480,7 +480,7 @@ def test_document_models(client):
 
     # Creating a new document model
     response = client.post(
-        "/document_models",
+        "/document-models",
         headers=headers,
         json={
             "model_name": "User",
@@ -495,7 +495,7 @@ def test_document_models(client):
 
     # Trying to recreate a document model with document and model already associated
     response = client.post(
-        "/document_models",
+        "/document-models",
         headers=headers,
         json={
             "model_name": "User",
@@ -507,7 +507,7 @@ def test_document_models(client):
     assert not response.json["meta"]["success"]
 
     # Querying a document model and checking if response contains document and model data
-    response = client.get(f'/document_models/{document_model["id"]}', headers=headers)
+    response = client.get(f'/document-models/{document_model["id"]}', headers=headers)
     assert response.status_code == 200
     assert response.json["meta"]["success"]
     queried_document_model = response.json["data"]
@@ -523,7 +523,7 @@ def test_document_models(client):
 
     # Deleting the created document model
     response = client.delete(
-        f'/document_models/{document_model["id"]}', headers=headers
+        f'/document-models/{document_model["id"]}', headers=headers
     )
     assert response.status_code == 204
 
@@ -556,7 +556,7 @@ def test_document_sharing(client):
     test_document_categories = []
     for document_category_data in document_categories_data:
         response = client.post(
-            "/document_categories", headers=headers, json=document_category_data
+            "/document-categories", headers=headers, json=document_category_data
         )
         assert response.status_code == 200
         assert response.json["meta"]["success"]
@@ -659,7 +659,7 @@ def test_document_sharing(client):
 
     # Trying to stop sharing a document not shared by the user
     response = client.delete(
-        f'/document_sharings/{document_sharing["id"]}', headers=share_headers
+        f'/document-sharings/{document_sharing["id"]}', headers=share_headers
     )
     assert response.status_code == 400
     assert not response.json["meta"]["success"]
@@ -678,11 +678,11 @@ def test_document_sharing(client):
 
     # Now, we'll remove all the document sharings (unshare the documents) to remove associated documents
     # First we list the shared documents
-    response = client.get("/document_sharings", headers=headers)
+    response = client.get("/document-sharings", headers=headers)
     document_sharings = response.json["data"]
     # Then, we'll unshare each one of them
     for ds in document_sharings:
-        response = client.delete(f'/document_sharings/{ds["id"]}', headers=headers)
+        response = client.delete(f'/document-sharings/{ds["id"]}', headers=headers)
         assert response.status_code == 204
 
     # We'll also remove all the created documents (to remove uploaded files)

@@ -197,21 +197,21 @@ def test_roles(client):
 
     # Adding routes to the newly created role
     response = client.post(
-        "/role_api_routes",
+        "/role-api-routes",
         headers=headers,
         json={"route": "/profile", "method": "GET", "role_id": role["id"]},
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
     response = client.post(
-        "/role_web_actions",
+        "/role-web-actions",
         headers=headers,
         json={"action": "/profile", "role_id": role["id"]},
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
     response = client.post(
-        "/role_mobile_actions",
+        "/role-mobile-actions",
         headers=headers,
         json={"action": "/profile", "role_id": role["id"]},
     )
