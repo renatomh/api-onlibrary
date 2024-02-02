@@ -27,3 +27,18 @@ uploads/tmp/*
 # Output files generated in app
 app/output/*
 !app/output/.gitkeep
+
+# Terraform files
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.lock.hcl
+.terraformrc
+terraform.d/plugins/
+*.tfvars
+!auto.tfvars
+.tfstate.d/
+.terraform-version
+.terraform/environment/
+.terraform.tfvars
+.terraform/providers/

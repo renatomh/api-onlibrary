@@ -56,4 +56,8 @@ migrateup:
 migratedown:
 	alembic downgrade base
 
-.PHONY: install-docker mysql postgresql populatedb copyenv translate test test-cov migrateup migratedown
+# This command starts the application
+start:
+	python run.py
+
+.PHONY: install-docker mysql postgresql populatedb copyenv translate test test-cov migrateup migratedown start
