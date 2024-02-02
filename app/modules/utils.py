@@ -38,7 +38,7 @@ def get_model_relationships(model):
         model_attr = str(r).replace(model.__name__ + ".", "")
         # Getting the related models
         # Checking if it's a many-to-many relationship or not
-        if r.__dict__["uselist"] == False:
+        if not r.__dict__["uselist"]:
             model_relationships[model_attr] = {
                 "model": eval(r.entity.class_.__name__),
                 "kind": "one",
@@ -54,7 +54,7 @@ def get_model_relationships(model):
 # Function to get the sorting attributes for a call
 def get_sort_attrs(model, sort):
     # If no sorting attributes were provided, we'll use the 'id' by default
-    if sort == "[]":
+    if sort == '"[]"':
         sort = '[{"property": "id", "direction": "ASC"}]'
 
     # Getting the model relationships
@@ -91,6 +91,12 @@ def get_sort_attrs(model, sort):
 
 # Function to get the join attributes/relationships for a call
 def get_join_attrs(model, filter, sort):
+    # If no filtering or sorting attributes were provided, we'll use default values
+    if filter == '"[]"':
+        filter = '[{"property":"id","value":"","anyMatch":true,"joinOn":"and","operator":"like"}]'
+    if sort == '"[]"':
+        sort = '[{"property": "id", "direction": "ASC"}]'
+
     # Getting the model relationships
     model_relationships = get_model_relationships(model)
     # Retrieving the join attributes
@@ -128,13 +134,17 @@ def format_filter_parameter(object, timezone=tz):
         datetime_stz = datetime_ptz.astimezone(tz)
         # And return the formatted item
         return datetime_stz.strftime("%Y-%m-%d %H:%M:%S")
-    except Exception as e:
+    except:
         # Otherwise, we'll return the raw object
         return object
 
 
 # Function to get the filtering attributes for a call
 def get_filter_attrs(model, filter, timezone=tz):
+    # If no filtering attributes were provided, we'll make it empty by default
+    if filter == '"[]"':
+        filter = '[{"property":"id","value":"","anyMatch":true,"joinOn":"and","operator":"like"}]'
+
     # Getting the model relationships
     model_relationships = get_model_relationships(model)
 
@@ -412,7 +422,7 @@ class DateTimeField(Field):
             try:
                 # Must be within the try/except
                 date_str = " ".join(valuelist)
-            except Exception as e:
+            except:
                 raise ValueError(self.gettext("Not a valid datetime value"))
             try:
                 # Checking which format was provided
@@ -439,7 +449,7 @@ class DateField(DateTimeField):
             try:
                 # Must be within the try/except
                 date_str = " ".join(valuelist)
-            except Exception as e:
+            except:
                 raise ValueError(self.gettext("Not a valid date value"))
             try:
                 self.data = datetime.strptime(date_str, self.format).date()
@@ -462,7 +472,7 @@ class TimeField(DateTimeField):
             try:
                 # Must be within the try/except
                 time_str = " ".join(valuelist)
-            except Exception as e:
+            except:
                 raise ValueError(self.gettext("Not a valid time value"))
             try:
                 self.data = datetime.strptime(time_str, self.format).time()
