@@ -19,7 +19,9 @@ from botocore.exceptions import ClientError
 
 # Modules to connect to IMAP server (Internet Message Access Protocol)
 # And read email messages
-import imaplib, email, re
+import imaplib
+import email
+import re
 from email.header import decode_header
 from bs4 import BeautifulSoup
 

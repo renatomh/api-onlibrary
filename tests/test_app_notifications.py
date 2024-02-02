@@ -165,7 +165,7 @@ def test_notifications(client, app):
     # Checking if status and read date are updated
     read_notification = response.json["data"]
     assert read_notification["is_read"] == 0
-    assert read_notification["read_at"] == None
+    assert read_notification["read_at"] is None
 
     # Deleting the created notification
     response = client.delete(f'/notifications/{notification["id"]}', headers=headers)

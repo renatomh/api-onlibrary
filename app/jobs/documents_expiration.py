@@ -3,9 +3,9 @@
 Main function to notify users about expiring documents
 
 Important:
-* This script should be called on the app's root folder, since its 
+* This script should be called on the app's root folder, since its
     imports depend on it;
-* The integration user credentials ("INTEGRATION_USER" and 
+* The integration user credentials ("INTEGRATION_USER" and
     "INTEGRATION_PASS") must be set on the .env file;
 
 """
@@ -15,7 +15,10 @@ from app.modules.document.models import Document
 
 # Other imports
 from datetime import datetime, timedelta
-import sys, os, requests, json
+import sys
+import os
+import requests
+import json
 
 # This job should be executed only when called directly,
 # not when imported from other modules/packages

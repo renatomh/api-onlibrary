@@ -3,7 +3,7 @@
 Refs:
     * Flask Request Documentation: https://tedboy.github.io/flask/generated/generated/flask.Request.html
     * SQLAlchemy Operator Reference: https://docs.sqlalchemy.org/en/14/core/operators.html
-    
+
 """
 
 # Import flask dependencies
@@ -202,7 +202,7 @@ def set_user_token(data):
     print(f"Setting client (SID: {request.sid}) user token {data}")
 
     # If no user token was provided, we just ignore and return
-    if not "user_token" in data.keys():
+    if "user_token" not in data.keys():
         return
 
     # Otherwise, we check if user token is valid

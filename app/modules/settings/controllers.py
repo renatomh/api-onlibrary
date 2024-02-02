@@ -3,7 +3,7 @@
 Refs:
     * Flask Request Documentation: https://tedboy.github.io/flask/generated/generated/flask.Request.html
     * SQLAlchemy Operator Reference: https://docs.sqlalchemy.org/en/14/core/operators.html
-    
+
 """
 
 # Import flask dependencies
