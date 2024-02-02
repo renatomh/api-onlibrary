@@ -161,7 +161,7 @@ variable "ssh_public_key" {
 # Creating a new EC2 instance
 resource "aws_instance" "ec2" {
   ami           = "ami-0e83be366243f524a" # Refers to Ubuntu Server 22.04 LTS (HVM), user data depends on it
-  instance_type = "t2.micro"              # You can replace this with your desired instance type
+  instance_type = "t3a.micro"             # You can replace this with your desired instance type
 
   # Defining the user data for the instance
   user_data = <<-EOF
@@ -204,6 +204,37 @@ resource "aws_instance" "ec2" {
     sudo snap install --classic certbot
     sudo ln -s /snap/bin/certbot /usr/bin/certbot
     EOF
+
+  # Adding the security group to the instance
+  vpc_security_group_ids = [aws_security_group.security_group.id]
+}
+
+# Defining variables for the RDS instance user password
+variable "db_password" {
+  description = "User's password for the RDS instance (write down this password, since it'll be the database user's password)"
+  type        = string
+}
+
+# Creating a new RDS database server instance
+resource "aws_db_instance" "rds" {
+  identifier            = "onlibrary"
+  allocated_storage     = 20
+  storage_type          = "gp3"
+  engine                = "mysql"
+  engine_version        = "8.0.33"
+  instance_class        = "db.t3.micro"
+  db_name               = "onlibrary"
+  username              = "root"
+  password              = var.db_password
+  parameter_group_name  = "default.mysql8.0"
+  publicly_accessible   = true
+  skip_final_snapshot   = true
+  storage_encrypted     = true
+  copy_tags_to_snapshot = true
+
+  # Enabling automated backups
+  backup_retention_period = 7
+  backup_window           = "03:50-04:20"
 
   # Adding the security group to the instance
   vpc_security_group_ids = [aws_security_group.security_group.id]
