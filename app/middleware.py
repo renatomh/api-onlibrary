@@ -40,7 +40,7 @@ def ensure_authenticated(func):
                     401,
                 )
             # Searching user by ID
-            user = User.query.filter_by(id=res).first()
+            user = User.query.get(res)
             # If no user is found
             if user is None:
                 return (
