@@ -188,8 +188,9 @@ In Linux systems, you can use the following command to check if the server is wo
 The *api-onlibrary.service* file must be updated and placed in the '/etc/systemd/system/' directory. After that, you should execute the following commands to enable and start the service:
 
 ```bash
-$ sudo systemctl start api-onlibrary
+$ sudo systemctl daemon-reload
 $ sudo systemctl enable api-onlibrary
+$ sudo systemctl start api-onlibrary
 $ sudo systemctl status api-onlibrary
 ```
 
