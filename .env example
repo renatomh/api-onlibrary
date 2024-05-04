@@ -10,23 +10,23 @@ APP_WEB_URL=http://localhost:3000
 INTEGRATION_USER=integration.user
 INTEGRATION_PASS=INTEGRATION_PASS
 
-# Defining the timezone name
-TZ=UTC #UTC, America/Sao_Paulo, US/Central, US/Pacific
+# Defining the timezone name (UTC, America/Sao_Paulo, US/Central, US/Pacific)
+TZ=UTC
 
 # Defining the Sentry Data Source Name
 SENTRY_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
 
-# Defining mail driver
-MAIL_DRIVER=smtp #ses, test
+# Defining mail driver (smtp, ses, test)
+MAIL_DRIVER=smtp
 # Mail details and credentials (when using raw smtp)
 MAIL_USER=user@example.com
 MAIL_PASS=example-pass
-SMTP_HOST=smtp.example.com #smtp.zoho.com
+SMTP_HOST=smtp.domain.com
 SMTP_PORT=465
 IMAP_HOST=mail.domain.com
 
-# Defining storage driver
-STORAGE_DRIVER=disk #s3
+# Defining storage driver (disk, s3)
+STORAGE_DRIVER=disk
 
 # Defining translation driver
 TRANSLATION_DRIVER=deep-translator
@@ -37,17 +37,18 @@ AWS_SECRET_ACCESS_KEY=key-secret
 AWS_REGION=us-east-2
 AWS_BUCKET=flask-app
 
-# Defining SQL driver
-SQL_DRIVER=sqlite #sqlite, mysql, postgresql, mssql
-# SQL credentials
-SQL_HOST=localhost #localhost, host.docker.internal, db
-SQL_PORT=3306 #3306, 5432, 1433
+# Defining SQL driver (sqlite, mysql, postgresql, mssql)
+SQL_DRIVER=sqlite
+# SQL Host (localhost, host.docker.internal, db)
+SQL_HOST=localhost
+# SQL Port (3306, 5432, 1433)
+SQL_PORT=3306
 SQL_DB=database_name
 SQL_USER=root
 SQL_PASS=example-pass
 
-# Defining push notifications driver
-PUSH_NOTIFICATION_DRIVER=nodriver #nodriver, fcm
+# Defining push notifications driver (nodriver, fcm)
+PUSH_NOTIFICATION_DRIVER=nodriver
 
 # FCM credentials JSON file
 FCM_CREDS_JSON_FILE=service-credentials.json
@@ -55,5 +56,5 @@ FCM_CREDS_JSON_FILE=service-credentials.json
 # For SQL Server, it is required to have the ODBC driver installed
 ODBC_DRIVER=ODBC+Driver+17+for+SQL+Server
 
-# FFmpeg executable path (must be installed on the machine)
-FFMPEG_PATH=/usr/bin/ffmpeg #/usr/bin/ffmpeg, C:\ffmpeg.exe
+# FFmpeg executable path (must be installed on the machine) (/usr/bin/ffmpeg, C:\ffmpeg.exe)
+FFMPEG_PATH=/usr/bin/ffmpeg
