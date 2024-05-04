@@ -10,7 +10,7 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 # Setting up the '.env' file with environment variables
 from dotenv import load_dotenv
 
-load_dotenv(".env", override=True)
+load_dotenv(".env")
 
 # Setting the flag for testing environment
 # The "TESTING" variable won't be set in the ".env" file, but directly in the
