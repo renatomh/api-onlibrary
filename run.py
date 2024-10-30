@@ -1,6 +1,4 @@
-"""
-Main script to run the application.
-"""
+"""Main script to run the application."""
 
 from config import PORT, HOST
 from app import app, socketio

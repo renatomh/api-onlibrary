@@ -1,6 +1,4 @@
-"""
-Script to run app on different plaftorms.
-"""
+"""Script to run app on different plaftorms."""
 
 import platform
 

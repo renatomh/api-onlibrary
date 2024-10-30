@@ -1,11 +1,10 @@
 """
-Script to translate strings from '.po' files and update the files
+Script to translate strings from '.po' files and update the files.
 
 References:
     * https://pypi.org/project/polib/
     * https://github.com/izimobil/polib/tree/master/tests
     * https://stackoverflow.com/questions/9580449/parsing-gettext-po-files-with-python
-
 """
 
 from os import path, sep, listdir
