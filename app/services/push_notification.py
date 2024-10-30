@@ -1,16 +1,13 @@
-# -*- coding: utf-8 -*-
+"""Third-party services to handle sending push notifications."""
 
-# Module to get the environment variables
 import os
+from typing import Optional, Dict, List, Any
 
-# Modules for Firebase
 from firebase_admin import messaging, credentials
 import firebase_admin
 
-# Getting the required variables
 from config import BASE_DIR
 
-# Firebase Cloud Messaging
 if os.environ.get("PUSH_NOTIFICATION_DRIVER") == "fcm":
     # Getting Firebase credentials
     creds = credentials.Certificate(
@@ -20,9 +17,21 @@ if os.environ.get("PUSH_NOTIFICATION_DRIVER") == "fcm":
     # Initializing the Firebase app
     default_app = firebase_admin.initialize_app(creds)
 
-    # Function to send a push notification for a specific token
-    def send_message(token, title, body, data=None):
-        # Creating the FCM message
+    def send_message(
+        token: str, title: str, body: str, data: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        Sends a push notification to a single device using a token.
+
+        Args:
+            token (str): The device token.
+            title (str): Title of the notification.
+            body (str): Body text of the notification.
+            data (Optional[Dict[str, Any]]): Additional data payload.
+
+        Returns:
+            str: The server response from the notification.
+        """
         message = messaging.Message(
             notification=messaging.Notification(
                 title=title,
@@ -31,23 +40,31 @@ if os.environ.get("PUSH_NOTIFICATION_DRIVER") == "fcm":
             data=data,
             token=token,
         )
-        # Sending the defined message
         response = messaging.send(message)
-        # Showing server response and returning to the user
-        print(response)
+        print("Message sent:", response)
         return response
 
-    # Function to send a push notification for a set of tokens
-    def send_multicast_message(tokens, title, body, data=None):
-        # Checking if user has provided a lista of tokens
+    def send_multicast_message(
+        tokens: List[str], title: str, body: str, data: Optional[Dict[str, Any]] = None
+    ) -> Optional[messaging.BatchResponse]:
+        """
+        Sends a push notification to multiple devices using a list of tokens.
+
+        Args:
+            tokens (List[str]): A list of device tokens.
+            title (str): Title of the notification.
+            body (str): Body text of the notification.
+            data (Optional[Dict[str, Any]]): Additional data payload.
+
+        Returns:
+            Optional[messaging.BatchResponse]: The server response if tokens are valid; otherwise, None.
+        """
         try:
             assert isinstance(tokens, list)
-        # If not, we'll inform about the error and return
-        except Exception as e:
-            print(e)
-            return
+        except AssertionError:
+            print("Error: 'tokens' must be a list of strings.")
+            return None
 
-        # Creating the FCM message
         message = messaging.MulticastMessage(
             notification=messaging.Notification(
                 title=title,
@@ -56,23 +73,36 @@ if os.environ.get("PUSH_NOTIFICATION_DRIVER") == "fcm":
             data=data,
             tokens=tokens,
         )
-        # Sending the defined message
         response = messaging.send_multicast(message)
-        # Showing server response and returning to the user
-        print(response)
+        print("Multicast message sent:", response)
         return response
 
-
-# If no driver was provided
 else:
-    # Function to send a push notification for a specific token
-    def send_message(token, title, body, data=None):
-        # Informing user about no driver provided
-        print("No driver provided")
-        return
 
-    # Function to send a push notification for a set of tokens
-    def send_multicast_message(tokens, title, body, data=None):
-        # Informing user about no driver provided
-        print("No driver provided")
-        return
+    def send_message(
+        token: str, title: str, body: str, data: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """
+        Placeholder for sending a single notification if no driver is provided.
+
+        Args:
+            token (str): The device token.
+            title (str): Title of the notification.
+            body (str): Body text of the notification.
+            data (Optional[Dict[str, Any]]): Additional data payload.
+        """
+        print("No driver provided for push notifications.")
+
+    def send_multicast_message(
+        tokens: List[str], title: str, body: str, data: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """
+        Placeholder for sending multicast notifications if no driver is provided.
+
+        Args:
+            tokens (List[str]): A list of device tokens.
+            title (str): Title of the notification.
+            body (str): Body text of the notification.
+            data (Optional[Dict[str, Any]]): Additional data payload.
+        """
+        print("No driver provided for push notifications.")

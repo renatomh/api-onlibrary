@@ -1,68 +1,70 @@
-# -*- coding: utf-8 -*-
+"""Third-party services to handle sending and reading email messages."""
 
-# Module to get the environment variables
 import os
-
-# Module to connect to SMTP server (Simple Mail Transfer Protocol)
+import re
 import smtplib
-
-# Module to allow files attachment
+import imaplib
+import email
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import make_msgid
+from email.header import decode_header
+from typing import Optional, Union, List, Dict, Any
 
-# Module for AWS
 import boto3
 from botocore.exceptions import ClientError
-
-# Modules to connect to IMAP server (Internet Message Access Protocol)
-# And read email messages
-import imaplib
-import email
-import re
-from email.header import decode_header
 from bs4 import BeautifulSoup
 
-# Config variables
 from config import OUTPUT_FOLDER
 
-# Raw SMTP
 if os.environ.get("MAIL_DRIVER") == "smtp":
 
-    def send_mail(recipients, subject, body_html, attachment_paths=None, sender=None):
-        # Defining the sender
-        if sender is not None:
-            _from = sender + f" <{os.environ.get('MAIL_USER')}>"
-        else:
-            _from = os.environ.get("MAIL_USER") + f" <{os.environ.get('MAIL_USER')}>"
+    def send_mail(
+        recipients: Union[str, List[str]],
+        subject: str,
+        body_html: str,
+        attachment_paths: Optional[List[str]] = None,
+        sender: Optional[str] = None,
+    ) -> None:
+        """
+        Sends an email with optional attachments using SMTP.
 
-        # Creating the e-mail content
+        Args:
+            recipients (Union[str, List[str]]): The email recipient(s).
+            subject (str): The subject of the email.
+            body_html (str): The HTML body of the email.
+            attachment_paths (Optional[List[str]]): Paths to files to attach to the email.
+            sender (Optional[str]): The sender's name.
+
+        Raises:
+            Exception: If an unsupported data type is provided for 'recipients'.
+        """
+        _from = (
+            f"{sender} <{os.environ.get('MAIL_USER')}>"
+            if sender
+            else f"{os.environ.get('MAIL_USER')} <{os.environ.get('MAIL_USER')}>"
+        )
+
+        # Create the email content
         message = MIMEMultipart()
         message["From"] = _from
         message["Subject"] = subject
-        # We should add the message ID, since some hosts require it
         message["Message-ID"] = make_msgid()
 
-        # Defining the recipients
-        # If a list was provided
-        if type(recipients) == list:
+        # Set recipients
+        if isinstance(recipients, list):
             message["To"] = ", ".join(recipients)
-        # If a single recipient was provided
-        elif type(recipients) == str:
+        elif isinstance(recipients, str):
             message["To"] = recipients
-        # If an unsupported data type was provided
         else:
-            error_msg = "Unsupported data type provided for 'recipients'"
-            print(error_msg)
-            raise Exception(error_msg)
+            raise Exception("Unsupported data type provided for 'recipients'")
 
-        # Attaching the mail body
         message.attach(MIMEText(body_html, "html"))
 
-        # Inserting attachments (if present)
-        if attachment_paths is not None:
+        # Attach files
+        if attachment_paths:
             for attachment_path in attachment_paths:
                 with open(attachment_path, "rb") as attachment:
                     part = MIMEBase("application", "octet-stream")
@@ -75,56 +77,60 @@ if os.environ.get("MAIL_DRIVER") == "smtp":
                     encoders.encode_base64(part)
                     message.attach(part)
 
-        # Converting to string
-        text = message.as_string()
-
-        # Connecting to server and sending mail
         try:
             server = smtplib.SMTP_SSL(
-                os.environ.get("SMTP_HOST"), os.environ.get("SMTP_PORT")
+                os.environ.get("SMTP_HOST"), int(os.environ.get("SMTP_PORT"))
             )
             server.login(os.environ.get("MAIL_USER"), os.environ.get("MAIL_PASS"))
-            server.sendmail(os.environ.get("MAIL_USER"), recipients, text)
+            server.sendmail(
+                os.environ.get("MAIL_USER"), recipients, message.as_string()
+            )
             server.close()
-        # If an exception is thrown
         except Exception as e:
             print("Error while trying to connect to email server.", e)
 
-
-# Amazon AWS SES
 elif os.environ.get("MAIL_DRIVER") == "ses":
 
-    def send_mail(recipients, subject, body_html, attachment_paths=None, sender=None):
-        # Reference: https://docs.aws.amazon.com/pt_br/ses/latest/DeveloperGuide/send-email-raw.html
-        # Defining the sender
-        if sender is not None:
-            _from = sender + f" <{os.environ.get('MAIL_USER')}>"
-        else:
-            _from = os.environ.get("MAIL_USER") + f" <{os.environ.get('MAIL_USER')}>"
+    def send_mail(
+        recipients: Union[str, List[str]],
+        subject: str,
+        body_html: str,
+        attachment_paths: Optional[List[str]] = None,
+        sender: Optional[str] = None,
+    ) -> None:
+        """
+        Sends an email with optional attachments using AWS SES.
 
-        # Creating the e-mail content
+        Args:
+            recipients (Union[str, List[str]]): The email recipient(s).
+            subject (str): The subject of the email.
+            body_html (str): The HTML body of the email.
+            attachment_paths (Optional[List[str]]): Paths to files to attach to the email.
+            sender (Optional[str]): The sender's name.
+
+        Raises:
+            Exception: If an unsupported data type is provided for 'recipients'.
+        """
+        _from = (
+            f"{sender} <{os.environ.get('MAIL_USER')}>"
+            if sender
+            else f"{os.environ.get('MAIL_USER')} <{os.environ.get('MAIL_USER')}>"
+        )
+
         message = MIMEMultipart()
         message["From"] = _from
         message["Subject"] = subject
 
-        # Defining the recipients
-        # If a list was provided
-        if type(recipients) == list:
+        if isinstance(recipients, list):
             message["To"] = ", ".join(recipients)
-        # If a single recipient was provided
-        elif type(recipients) == str:
+        elif isinstance(recipients, str):
             message["To"] = recipients
-        # If an unsupported data type was provided
         else:
-            error_msg = "Unsupported data type provided for 'recipients'"
-            print(error_msg)
-            raise Exception(error_msg)
+            raise Exception("Unsupported data type provided for 'recipients'")
 
-        # Attaching the mail body
         message.attach(MIMEText(body_html, "html"))
 
-        # Inserting attachments (if present)
-        if attachment_paths is not None:
+        if attachment_paths:
             for attachment_path in attachment_paths:
                 with open(attachment_path, "rb") as attachment:
                     part = MIMEBase("application", "octet-stream")
@@ -137,10 +143,6 @@ elif os.environ.get("MAIL_DRIVER") == "ses":
                     encoders.encode_base64(part)
                     message.attach(part)
 
-        # Converting to string
-        text = message.as_string()
-
-        # Create a new SES resource and specify a region.
         client = boto3.client(
             "ses",
             region_name=os.environ.get("AWS_REGION"),
@@ -148,67 +150,89 @@ elif os.environ.get("MAIL_DRIVER") == "ses":
             aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
         )
 
-        # Connecting to server and sending mail
         try:
             response = client.send_raw_email(
                 Source=_from,
-                Destinations=recipients,
-                RawMessage={"Data": text},
+                Destinations=(
+                    [recipients] if isinstance(recipients, str) else recipients
+                ),
+                RawMessage={"Data": message.as_string()},
             )
-        # Display an error if something goes wrong.
+            print("Email sent! Message ID:", response["MessageId"])
         except ClientError as e:
             print(e.response["Error"]["Message"])
-        else:
-            print("Email sent! Message ID:"),
-            print(response["MessageId"])
 
-
-# Used for testing
 elif os.environ.get("MAIL_DRIVER") == "test":
 
-    def send_mail(recipients, subject, body_html, attachment_paths=None, sender=None):
-        # Here, we'll just print out the data, so tests won't try to connect to mail host
-        # Hence, tests will execute faster
+    def send_mail(
+        recipients: Union[str, List[str]],
+        subject: str,
+        body_html: str,
+        attachment_paths: Optional[List[str]] = None,
+        sender: Optional[str] = None,
+    ) -> None:
+        """
+        Simulates sending an email by printing the email contents.
+
+        Args:
+            recipients (Union[str, List[str]]): The email recipient(s).
+            subject (str): The subject of the email.
+            body_html (str): The HTML body of the email.
+            attachment_paths (Optional[List[str]]): Paths to files to attach to the email.
+            sender (Optional[str]): The sender's name.
+        """
         print(recipients, subject, body_html, attachment_paths, sender)
-        return
 
 
-# Function to extract text from HTMl
-def extract_text_from_html(html):
-    # Create a BeautifulSoup object to parse the HTML
+def extract_text_from_html(html: str) -> str:
+    """
+    Extracts and cleans text from HTML content.
+
+    Args:
+        html (str): The HTML content.
+
+    Returns:
+        str: Cleaned text from HTML.
+    """
     soup = BeautifulSoup(html, "html.parser")
-
-    # Remove all script and style tags
     for script in soup(["script", "style"]):
         script.extract()
-
-    # Get the text content from the HTML
     text = soup.get_text()
-
-    # Remove extra whitespaces and newlines
-    text = re.sub(r"\s+", " ", text).strip()
-
-    # Returning the resulting text
-    return text
+    return re.sub(r"\s+", " ", text).strip()
 
 
-# Function to read email messages
 def read_email(
-    no_messages=1,
-    mailbox="INBOX",
-    imap_host=os.environ.get("IMAP_HOST"),
-    username=os.environ.get("MAIL_USER"),
-    password=os.environ.get("MAIL_PASS"),
-    filter_from="",
-    filter_subject="",
-    filter_body="",
-    filter_seen_unseen="",
-    filter_date="",
-):
-    # Initializing the list of email messages
+    no_messages: int = 1,
+    mailbox: str = "INBOX",
+    imap_host: Optional[str] = os.environ.get("IMAP_HOST"),
+    username: Optional[str] = os.environ.get("MAIL_USER"),
+    password: Optional[str] = os.environ.get("MAIL_PASS"),
+    filter_from: str = "",
+    filter_subject: str = "",
+    filter_body: str = "",
+    filter_seen_unseen: str = "",
+    filter_date: str = "",
+) -> List[Dict[str, Any]]:
+    """
+    Reads and filters email messages from an IMAP mailbox.
+
+    Args:
+        no_messages (int): Number of messages to fetch.
+        mailbox (str): Mailbox folder name.
+        imap_host (Optional[str]): IMAP host.
+        username (Optional[str]): Username for the mailbox.
+        password (Optional[str]): Password for the mailbox.
+        filter_from (str): Filter by sender.
+        filter_subject (str): Filter by subject.
+        filter_body (str): Filter by body content.
+        filter_seen_unseen (str): Filter by read/unread status.
+        filter_date (str): Filter by date.
+
+    Returns:
+        List[Dict[str, Any]]: List of email messages.
+    """
     email_messages = []
 
-    # Logging in to mail server with account credentials
     try:
         mail = imaplib.IMAP4_SSL(imap_host)
         mail.login(username, password)
@@ -216,180 +240,71 @@ def read_email(
         print("Error while logging to mail server:", e)
         return email_messages
 
-    # Building the filter query
     filter_query = "ALL"
-    # It can be an email address, domain, part of it, e.g.: 'postmaster', '@gmail.com'
-    filter_query += f' FROM "{filter_from}"' if len(filter_from) > 0 else ""
-    filter_query += f' SUBJECT "{filter_subject}"' if len(filter_subject) > 0 else ""
-    filter_query += f' BODY "{filter_body}"' if len(filter_body) > 0 else ""
-    # '', 'SEEN' or 'UNSEEN'
-    filter_query += f" {filter_seen_unseen}" if len(filter_seen_unseen) > 0 else ""
-    # Sent at, e.g. '19-Feb-2015' (datetime.today().strftime("%d-%b-%Y"))
-    filter_query += f" (ON {filter_date})" if len(filter_date) > 0 else ""
+    filter_query += f' FROM "{filter_from}"' if filter_from else ""
+    filter_query += f' SUBJECT "{filter_subject}"' if filter_subject else ""
+    filter_query += f' BODY "{filter_body}"' if filter_body else ""
+    filter_query += f" {filter_seen_unseen}" if filter_seen_unseen else ""
+    filter_query += f" (ON {filter_date})" if filter_date else ""
 
-    # We can get a list of mailboxes with mail.list()
-    # We can set the message to be marked as unread
-    # status, messages = mail.select(mailbox, readonly=True)
-    # Or set the message to be marked as read
     status, messages = mail.select(mailbox)
 
-    # Searching emails
     try:
         status, data = mail.search(None, filter_query)
     except Exception as e:
         print("Error while searching mail:", e)
         mail.logout()
         return email_messages
-    id_list = data[0].decode().split()
-    id_list = list(map(int, id_list))
+    id_list = list(map(int, data[0].decode().split()))
+    id_list = sorted(id_list, reverse=True)[:no_messages]
 
-    # Sorting from most recent to older one
-    id_list = sorted(id_list, reverse=True)
-    id_list = id_list[0:no_messages]
-
-    # For each message ID retrieved
     for message_id in id_list:
         email_messages.append(read_email_message(mail, message_id))
 
-    # In the end, we logout
     mail.logout()
-
-    # And return the list of email messages
     return email_messages
 
 
-# Function to read an email message and download ataached files
 def read_email_message(
-    mail,
-    message_id,
-    attachments_folder=OUTPUT_FOLDER,
-):
-    # Dict to store read message data
-    email_message = {
-        "subject": None,
-        "from": None,
-        "to": None,
-        "date": None,
-        "body": None,
-        "html": None,
-        "attachments": None,
+    mail: imaplib.IMAP4_SSL, message_id: int, attachments_folder: str = OUTPUT_FOLDER
+) -> Dict[str, Any]:
+    """
+    Reads a single email message by ID and saves attachments.
+
+    Args:
+        mail (imaplib.IMAP4_SSL): The IMAP connection object.
+        message_id (int): The ID of the email message.
+        attachments_folder (str): Path to the folder to save attachments.
+
+    Returns:
+        Dict[str, Any]: Parsed email data.
+    """
+    status, msg_data = mail.fetch(str(message_id), "(RFC822)")
+    msg = email.message_from_bytes(msg_data[0][1])
+
+    message_details = {
+        "from": decode_header(msg["From"])[0][0],
+        "subject": decode_header(msg["Subject"])[0][0],
+        "date": msg["Date"],
+        "body": "",
+        "attachments": [],
     }
 
-    # Getting message by ID
-    res, msg = mail.fetch(str(message_id), "(RFC822)")
-
-    # If something goes wrong
-    if res != "OK":
-        print("Error while reading email:", res)
-        return email_message
-
-    # For each obtained result
-    for response in msg:
-        # Checking if is a tuple
-        if isinstance(response, tuple):
-            # Parsing email from bytes o message object
-            msg = email.message_from_bytes(response[1])
-
-            # Decoding email data and updating message dict
-            # Subject
-            try:
-                Subject, encoding = decode_header(msg["Subject"])[0]
-                if isinstance(Subject, bytes):
-                    email_message["subject"] = Subject.decode(encoding)
-            except Exception as e:
-                print("Error while reading subject:", e)
-            # Sender
-            try:
-                From, encoding = decode_header(msg.get("From"))[0]
-                if isinstance(From, bytes):
-                    email_message["from"] = From.decode(encoding)
-                else:
-                    email_message["from"] = From
-            except Exception as e:
-                print("Error while reading sender:", e)
-            # Receiver
-            try:
-                To, encoding = decode_header(msg.get("To"))[0]
-                if isinstance(To, bytes):
-                    email_message["to"] = To.decode(encoding)
-                else:
-                    email_message["to"] = To
-            except Exception as e:
-                print("Error while reading receiver:", e)
-            # Date
-            try:
-                Date, encoding = decode_header(msg.get("Date"))[0]
-                if isinstance(Date, bytes):
-                    email_message["date"] = Date.decode(encoding)
-                else:
-                    email_message["date"] = Date
-            except Exception as e:
-                print("Error while reading date:", e)
-
-            # Checking for multipart message
-            if msg.is_multipart():
-                # Iterating parts
-                for part in msg.walk():
-                    # Getting part content type
-                    content_type = part.get_content_type()
-                    content_disposition = str(part.get("Content-Disposition"))
-                    content_encoding = part.get_content_charset()
-                    # print(content_type, content_disposition, content_encoding)
-
-                    # Getting email body
-                    if content_type == "text/plain":
-                        email_message["body"] = part.get_payload(decode=True).decode(
-                            content_encoding
-                        )
-                    elif content_type == "text/html":
-                        email_message["html"] = part.get_payload(decode=True).decode(
-                            content_encoding
-                        )
-                    elif "attachment" in content_disposition:
-                        # Downloading attachments
-                        try:
-                            file, encoding = decode_header(part.get_filename())[0]
-                            if isinstance(file, bytes):
-                                filename = file.decode(encoding)
-                            else:
-                                filename = file
-                            if file:
-                                # Creating file path for attachment
-                                filepath = os.path.join(attachments_folder, filename)
-                                # Saving file
-                                open(filepath, "wb").write(
-                                    part.get_payload(decode=True)
-                                )
-                                email_message["attachments"] = filepath
-                        except Exception as e:
-                            print(
-                                "Error while getting attachment data:",
-                                Subject,
-                                filename,
-                                e,
-                            )
-
-            # Other types of messages
-            else:
-                # Getting message content type
-                content_type = msg.get_content_type()
-                content_encoding = msg.get_content_charset()
-                # print (content_type, content_encoding)
-                # Getting email body
-                body = msg.get_payload(decode=True).decode(content_encoding)
-                # Updating message dict
-                email_message["body"] = body
-
-                # For HTML messages
-                if content_type == "text/html":
-                    email_message["html"] = part.get_payload(decode=True).decode(
-                        content_encoding
-                    )
-
-    # In the end, if we have an empty body field, we'll clean the HTML to
-    # get the message body
-    if not email_message["body"]:
-        email_message["body"] = extract_text_from_html(email_message["html"])
-
-    # Finally, we return the dict with email contents
-    return email_message
+    if msg.is_multipart():
+        for part in msg.walk():
+            if part.get_content_type() == "text/plain" and "attachment" not in part.get(
+                "Content-Disposition", ""
+            ):
+                message_details["body"] = part.get_payload(decode=True).decode()
+            elif part.get("Content-Disposition") and "attachment" in part.get(
+                "Content-Disposition"
+            ):
+                filename = part.get_filename()
+                if filename:
+                    filepath = os.path.join(attachments_folder, filename)
+                    with open(filepath, "wb") as f:
+                        f.write(part.get_payload(decode=True))
+                    message_details["attachments"].append(filepath)
+    else:
+        message_details["body"] = msg.get_payload(decode=True).decode()
+    return message_details
