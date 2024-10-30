@@ -1,23 +1,15 @@
-# -*- coding: utf-8 -*-
+"""Validation forms for the documents module."""
 
-# Import Form
 from wtforms import Form
-
-# Import JSON extension for forms
 import wtforms_json
-
-# Import Form elements such as TextField and BooleanField (optional)
 from wtforms import TextField, RadioField, IntegerField
-
-# Import Form validators
 from wtforms.validators import InputRequired, Email, Optional, Length
+
 from app.modules.utils import DateField
 
-# Initiating JSON for forms
 wtforms_json.init()
 
 
-# Define the create document category form (WTForms)
 class CreateDocumentCategoryForm(Form):
     code = TextField(
         "Code", [InputRequired(message="You must provide a code."), Length(max=128)]
@@ -27,13 +19,11 @@ class CreateDocumentCategoryForm(Form):
     )
 
 
-# Define the update document category form (WTForms)
 class UpdateDocumentCategoryForm(Form):
     code = TextField("Code", [Optional(), Length(max=128)])
     name = TextField("Name", [Optional(), Length(max=256)])
 
 
-# Define the create document form (WTForms)
 class CreateDocumentForm(Form):
     code = TextField("Code", [Optional(), Length(max=128)])
     description = TextField(
@@ -56,7 +46,6 @@ class CreateDocumentForm(Form):
     document_category_id = IntegerField("Document Category ID", [Optional()])
 
 
-# Define the update document form (WTForms)
 class UpdateDocumentForm(Form):
     code = TextField("Code", [Optional(), Length(max=128)])
     description = TextField("Description", [Optional(), Length(max=256)])
@@ -70,7 +59,6 @@ class UpdateDocumentForm(Form):
     document_category_id = IntegerField("Document Category ID", [Optional()])
 
 
-# Define the create document model form (WTForms)
 class CreateDocumentModelForm(Form):
     # TODO: must be updated if other models should be allowed
     model_name = RadioField(
@@ -88,7 +76,6 @@ class CreateDocumentModelForm(Form):
     )
 
 
-# Define the create document sharing form (WTForms)
 class CreateDocumentSharingForm(Form):
     shared_user_id = IntegerField(
         "Shared User ID",

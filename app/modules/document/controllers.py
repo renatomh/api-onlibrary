@@ -1,57 +1,27 @@
-# -*- coding: utf-8 -*-
-"""
-Refs:
-    * Flask Request Documentation: https://tedboy.github.io/flask/generated/generated/flask.Request.html
-    * SQLAlchemy Operator Reference: https://docs.sqlalchemy.org/en/14/core/operators.html
+"""Controllers and blueprins/endpoints for the documents module."""
 
-"""
-
-# Import flask dependencies
-from flask import Blueprint, request, jsonify, g
-from flask_babel import _
-
-# Function to be called on 'eval', in order to join models relationships
-from sqlalchemy.orm import selectinload
-from sqlalchemy import or_
-
-# Session maker to allow database communication
-from app import AppSession
-
-# Dependencies for files upload
 from os import path, stat
-
-# Function for files upload
-from werkzeug.utils import secure_filename
-
-# Library to get current timestamp
 import time
-
-# Import services
-from app.services.storage import store_file, remove_file
-from app.services.thumbnail import get_file_thumbnail
-
-# Config variables
-from config import UPLOAD_TEMP_FOLDER, ALLOWED_FILE_EXTENSIONS, tz
-
-# Import dependencies
 import pytz
 
-# Middlewares
+from flask import Blueprint, request, jsonify, g
+from flask_babel import _
+from sqlalchemy.orm import selectinload  # This function is called within 'eval'
+from werkzeug.utils import secure_filename
+
+from app import AppSession
+from app.services.storage import store_file, remove_file
+from app.services.thumbnail import get_file_thumbnail
+from config import UPLOAD_TEMP_FOLDER, ALLOWED_FILE_EXTENSIONS, tz
 from app.middleware import ensure_authenticated, ensure_authorized
-
-# Import module forms
 from app.modules.document.forms import *
-
-# Import module models
 from app.modules.document.models import *
 from app.modules.users.models import *
 from app.modules.settings.models import *
-
-# Utilities functions
 from app.modules.utils import get_sort_attrs, get_join_attrs, get_filter_attrs
 from app.modules.document.utils import notify_document_expiration
 
-# Define the blueprint: 'auth', set its url prefix: app.url/auth
+# Blueprints for the model
 mod_document_category = Blueprint(
     "document_categories", __name__, url_prefix="/document-categories"
 )
@@ -64,15 +34,14 @@ mod_document_sharing = Blueprint(
 )
 
 
-# Set the route and accepted methods
 @mod_document_category.route("", methods=["GET"])
 @ensure_authenticated
 def index_document_category():
-    # Only GET method is allowed, so we don't have to check the method here
+    """Lists the document categories."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -84,19 +53,14 @@ def index_document_category():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = DocumentCategory
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
     )
 
-    # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -119,32 +83,27 @@ def index_document_category():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_document_category.route("", methods=["POST"])
 @ensure_authorized
 def create_document_category():
-    # Only POST method is allowed, so we don't have to check the method here
-    # If data form is submitted
+    """Creates a new document category."""
+
     form = CreateDocumentCategoryForm.from_json(request.json)
-    # Getting the model
     model = DocumentCategory
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Checking if unique value is already in use
         if session.query(model).filter_by(code=form.code.data).first():
@@ -167,7 +126,6 @@ def create_document_category():
             session.flush()
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -176,14 +134,12 @@ def create_document_category():
             )
 
 
-# Set the route and accepted methods
 @mod_document_category.route("/<int:id>", methods=["GET"])
 @ensure_authenticated
 def get_document_category_by_id(id):
-    # Only GET method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Returns a document category, given its id."""
+
     with AppSession() as session:
-        # Getting the model
         model = DocumentCategory
         selectinloads = eval(
             "".join(
@@ -207,27 +163,22 @@ def get_document_category_by_id(id):
         )
 
 
-# Set the route and accepted methods
 @mod_document_category.route("/<int:id>", methods=["PUT"])
 @ensure_authorized
 def update_document_category(id):
-    # Only PUT method is allowed, so we don't have to check the method here
-    # If data form is submitted
+    """Updates a document category, given its id."""
+
     form = UpdateDocumentCategoryForm.from_json(request.json)
-    # Getting the model
     model = DocumentCategory
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
-        # Getting the item to be updated
         item = session.query(model).get(id)
         # If no item is found
         if not item:
@@ -267,24 +218,20 @@ def update_document_category(id):
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_document_category.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_document_category(id):
-    # Only DELETE method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Deletes a document category, given its id."""
+
     with AppSession() as session:
-        # Searching item by ID
         item = session.query(DocumentCategory).get(id)
 
         # If no item is found
@@ -299,7 +246,6 @@ def delete_document_category(id):
                 404,
             )
 
-        # If the item is found
         # Checking if there are relationships defined for the item
         # TODO: check for newly created relationships
         if (
@@ -324,7 +270,7 @@ def delete_document_category(id):
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
+
         except Exception as e:
             session.rollback()
             return (
@@ -333,15 +279,14 @@ def delete_document_category(id):
             )
 
 
-# Set the route and accepted methods
 @mod_document.route("", methods=["GET"])
 @ensure_authorized
 def index_document():
-    # Only GET method is allowed, so we don't have to check the method here
+    """Lists the documents."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -353,19 +298,14 @@ def index_document():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = Document
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
     )
 
-    # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -388,22 +328,20 @@ def index_document():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_document.route("/my", methods=["GET"])
 @ensure_authenticated
 def index_my_document():
-    # Only GET method is allowed, so we don't have to check the method here
+    """Lists an user documents."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -415,19 +353,14 @@ def index_my_document():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = Document
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
     )
 
-    # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -452,22 +385,20 @@ def index_my_document():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_document.route("/shared", methods=["GET"])
 @ensure_authenticated
 def index_shared_document():
-    # Only GET method is allowed, so we don't have to check the method here
+    """Lists the documents shared with an user."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -479,7 +410,6 @@ def index_shared_document():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = Document
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
@@ -494,13 +424,9 @@ def index_shared_document():
     )
     shared_document_ids = [res_id[0] for res_id in res_ids]
 
-    # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -525,23 +451,20 @@ def index_shared_document():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_document.route("", methods=["POST"])
 @ensure_authorized
 def create_document():
-    # Only POST method is allowed, so we don't have to check the method here
+    """Creates a document."""
 
     # If data form is submitted, we can access the multipart/form-data like so
     print(dict(request.form))
     form = CreateDocumentForm.from_json(dict(request.form))
-    # Getting the model
     model = Document
 
     # Trying to get the file
@@ -579,16 +502,13 @@ def create_document():
             400,
         )
 
-    # Otherwise, we'll check if the other required data was provided
-    # If something goes wrong when validating provided data
+    # Validating provided data
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # If no code was provided, we'll create one automatically by the timestamp
         if form.code.data is None:
@@ -678,7 +598,7 @@ def create_document():
             # Loading the file to the temp folder
             file.save(path.join(UPLOAD_TEMP_FOLDER, filename))
             # Getting file size
-            file_size = os.stat(path.join(UPLOAD_TEMP_FOLDER, filename)).st_size
+            file_size = stat(path.join(UPLOAD_TEMP_FOLDER, filename)).st_size
 
             # Generating file thumbnail
             file_thumb = get_file_thumbnail(path.join(UPLOAD_TEMP_FOLDER, filename))
@@ -687,7 +607,7 @@ def create_document():
                 # We'll get the thumbnail filename
                 filename_thumb = path.basename(file_thumb)
                 # And the thumbnail file size
-                file_size_thumb = os.stat(file_thumb).st_size
+                file_size_thumb = stat(file_thumb).st_size
             # Otherwise, we'll set the thumbnail filename and file size as None
             else:
                 filename_thumb = None
@@ -733,7 +653,6 @@ def create_document():
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -742,14 +661,12 @@ def create_document():
             )
 
 
-# Set the route and accepted methods
 @mod_document.route("/<int:id>", methods=["GET"])
 @ensure_authenticated
 def get_document_by_id(id):
-    # Only GET method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Gets a document by its id."""
+
     with AppSession() as session:
-        # Getting the model
         model = Document
         selectinloads = eval(
             "".join(
@@ -760,7 +677,6 @@ def get_document_by_id(id):
         # Searching item by ID
         item = session.query(model).options(selectinloads).get(id)
 
-        # If item is found
         if item:
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
@@ -773,27 +689,22 @@ def get_document_by_id(id):
         )
 
 
-# Set the route and accepted methods
 @mod_document.route("/<int:id>", methods=["PUT"])
 @ensure_authorized
 def update_document(id):
-    # Only PUT method is allowed, so we don't have to check the method here
-    # If data form is submitted
+    """Updates a document given its id."""
+
     form = UpdateDocumentForm.from_json(request.json)
-    # Getting the model
     model = Document
 
-    # If something goes wrong when validating provided data
+    # Validating provided data
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
-        # Getting the item to be updated
         item = session.query(model).get(id)
         # If no item is found
         if not item:
@@ -900,24 +811,20 @@ def update_document(id):
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_document.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_document(id):
-    # Only DELETE method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Deletes a document given its id."""
+
     with AppSession() as session:
-        # Searching item by ID
         item = session.query(Document).get(id)
 
         # If no item is found
@@ -932,7 +839,6 @@ def delete_document(id):
                 404,
             )
 
-        # If the item is found
         # Checking if there are any associated assets to the asset group
         # TODO: check for newly created relationships
         if (
@@ -968,7 +874,6 @@ def delete_document(id):
             if file_thumbnail_url is not None:
                 remove_file(file_thumbnail_url)
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -977,15 +882,14 @@ def delete_document(id):
             )
 
 
-# Set the route and accepted methods
 @mod_document_model.route("", methods=["GET"])
 @ensure_authenticated
 def index_document_model():
-    # Only GET method is allowed, so we don't have to check the method here
+    """Lists the document models."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -997,19 +901,14 @@ def index_document_model():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = DocumentModel
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
     )
 
-    # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -1032,26 +931,22 @@ def index_document_model():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_document_model.route("", methods=["POST"])
 @ensure_authorized
 def create_document_model():
-    # Only POST method is allowed, so we don't have to check the method here
-    # If data form is submitted
+    """Creates a document model."""
+
     form = CreateDocumentModelForm.from_json(request.json)
-    # Getting the model
     model = DocumentModel
 
-    # If something goes wrong when validating provided data
+    # Validating provided data
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
@@ -1083,7 +978,6 @@ def create_document_model():
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Checking if document exists
         if session.query(Document).get(form.document_id.data) is None:
@@ -1127,7 +1021,6 @@ def create_document_model():
             session.flush()
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1136,11 +1029,10 @@ def create_document_model():
             )
 
 
-# Set the route and accepted methods
 @mod_document_model.route("/<int:id>", methods=["GET"])
 @ensure_authenticated
 def get_document_model_by_id(id):
-    # Only GET method is allowed, so we don't have to check the method here
+    """Gets a document model by id."""
 
     # Creating a dict with the possible model names
     # TODO: must be updated if other models should be allowed
@@ -1148,9 +1040,7 @@ def get_document_model_by_id(id):
         "User": User,
     }
 
-    # Creating the session for database communication
     with AppSession() as session:
-        # Getting the model
         model = DocumentModel
         selectinloads = eval(
             "".join(
@@ -1184,18 +1074,15 @@ def get_document_model_by_id(id):
                 .as_dict()
             )
 
-        # And return the resulting data
         return jsonify({"data": data, "meta": {"success": True}})
 
 
-# Set the route and accepted methods
 @mod_document_model.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_document_model(id):
-    # Only DELETE method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Deletes a document model given its id."""
+
     with AppSession() as session:
-        # Searching item by ID
         item = session.query(DocumentModel).get(id)
 
         # If no item is found
@@ -1210,12 +1097,10 @@ def delete_document_model(id):
                 404,
             )
 
-        # If the item is found
         try:
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1224,15 +1109,14 @@ def delete_document_model(id):
             )
 
 
-# Set the route and accepted methods
 @mod_document_sharing.route("", methods=["GET"])
 @ensure_authenticated
 def index_document_sharing():
-    # Only GET method is allowed, so we don't have to check the method here
+    """Lists the document sharings."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -1244,19 +1128,14 @@ def index_document_sharing():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = DocumentSharing
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
     )
 
-    # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -1279,32 +1158,27 @@ def index_document_sharing():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_document.route("/<int:id>/share", methods=["POST"])
 @ensure_authorized
 def create_document_sharing(id):
-    # Only POST method is allowed, so we don't have to check the method here
-    # If data form is submitted
+    """Shares a document with another user."""
+
     form = CreateDocumentSharingForm.from_json(request.json)
-    # Getting the model
     model = DocumentSharing
 
-    # If something goes wrong when validating provided data
+    # Validating provided data
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Checking if document exists
         document = session.query(Document).get(id)
@@ -1391,7 +1265,6 @@ def create_document_sharing(id):
             session.flush()
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1400,14 +1273,12 @@ def create_document_sharing(id):
             )
 
 
-# Set the route and accepted methods
 @mod_document_sharing.route("/<int:id>", methods=["GET"])
 @ensure_authenticated
 def get_document_sharing_by_id(id):
-    # Only GET method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Gets a document saring by id."""
+
     with AppSession() as session:
-        # Getting the model
         model = DocumentSharing
         selectinloads = eval(
             "".join(
@@ -1422,7 +1293,6 @@ def get_document_sharing_by_id(id):
         if item:
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
-        # If no item is found
         return (
             jsonify(
                 {"data": [], "meta": {"success": False, "errors": _("No item found")}}
@@ -1431,12 +1301,11 @@ def get_document_sharing_by_id(id):
         )
 
 
-# Set the route and accepted methods
 @mod_document_sharing.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_document_sharing(id):
-    # Only DELETE method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Stops sharing a document."""
+
     with AppSession() as session:
         # Searching item by ID
         item = session.query(DocumentSharing).get(id)
@@ -1475,7 +1344,6 @@ def delete_document_sharing(id):
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1484,12 +1352,11 @@ def delete_document_sharing(id):
             )
 
 
-# Set the route and accepted methods
 @mod_document.route("/<int:id>/notify_expiration", methods=["POST"])
 @ensure_authorized
 def notify_expiring_document(id):
-    # Only POST method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Notifis stakeholders about a document expiration."""
+
     with AppSession() as session:
         try:
             # Checking if document exists
@@ -1515,7 +1382,6 @@ def notify_expiring_document(id):
                 {"data": _("Users will be notified"), "meta": {"success": True}}
             )
 
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (

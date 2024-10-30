@@ -1,25 +1,19 @@
-# -*- coding: utf-8 -*-
+"""Utilities for the documents module."""
 
-# Import flask dependencies
+from datetime import datetime
+
+from humanize import naturalsize
 from flask import render_template
 from flask_babel import _
 
-# Import services
 from app.services.mail import send_mail
-
-# Import module models
 from app.modules.document.models import *
-
-# Utilities functions
 from app.modules.notification.utils import *
 
-# Other imports
-from datetime import datetime
-from humanize import naturalsize
 
-
-# Function to send a notification for an expiring document
 def notify_document_expiration(document_id, session):
+    """Function to send a notification for an expiring document."""
+
     # Getting the document object
     document = Document.query.get(document_id)
 
@@ -44,9 +38,8 @@ def notify_document_expiration(document_id, session):
     # Replacing data in jinja2 template
     body_html = render_template("emails/document_expiration.html", **data)
 
-    # If there is a email address registered for notification
+    # If there is an email address registered for notification
     if document.alert_email is not None:
-        # Trying to send the email
         try:
             # Sending notification mail
             send_mail(
@@ -55,7 +48,6 @@ def notify_document_expiration(document_id, session):
                 body_html=body_html,
                 sender="No Reply | CDOA APAC",
             )
-        # If an error occurs
         except Exception as e:
             print("An error occurred while trying to notify the users via email", e)
 

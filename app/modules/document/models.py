@@ -1,20 +1,15 @@
-# -*- coding: utf-8 -*-
+"""Models for the documents module."""
 
-# Import flask dependencies
 import os
 
-# Getting config data
 from config import STORAGE_DRIVER, tz
-
-# Import the database object (db) from the main application module
 from app import db
-
-# Import models
 from app.modules.users.models import *
 
 
-# Function to format an object (like datetime/date) to a string
 def default_object_string(object, timezone=tz):
+    """Function to format an object (like datetime/date) to a string."""
+
     if str(type(object)) == "<class 'datetime.datetime'>":
         try:
             return (
@@ -27,8 +22,9 @@ def default_object_string(object, timezone=tz):
     return object
 
 
-# Define a base model for other database tables to inherit
 class Base(db.Model):
+    """Base application model for other database tables to inherit."""
+
     __abstract__ = True
 
     # Defining base columns
@@ -41,7 +37,6 @@ class Base(db.Model):
     )
 
 
-# Define a document category model using Base columns
 class DocumentCategory(Base):
     __tablename__ = "document_category"
 
@@ -53,7 +48,6 @@ class DocumentCategory(Base):
     document = db.relationship("Document", lazy="select", backref="document_category")
     # model_name = db.relationship('ModelName', lazy='select', backref='document_category')
 
-    # New instance instantiation procedure
     def __init__(self, code, name):
         self.code = code
         self.name = name
@@ -63,19 +57,17 @@ class DocumentCategory(Base):
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
         }
-        # Adding the related tables
+        # Add related tables
         for c in self.__dict__:
             if "app" in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
         return data
 
 
-# Define a document model using Base columns
 class Document(Base):
     __tablename__ = "document"
 
@@ -114,7 +106,6 @@ class Document(Base):
     )
     # model_name = db.relationship('ModelName', lazy='select', backref='document')
 
-    # New instance instantiation procedure
     def __init__(
         self,
         code,
@@ -160,7 +151,14 @@ class Document(Base):
             if STORAGE_DRIVER == "disk":
                 return f'{os.environ.get("APP_API_URL")}/files/{self.file_url}'
             elif STORAGE_DRIVER == "s3":
-                return f'https://{os.environ.get("AWS_BUCKET")}.s3.{os.environ.get("AWS_REGION")}.amazonaws.com/{self.file_url}'
+                return (
+                    "https://"
+                    + os.environ.get("AWS_BUCKET")
+                    + ".s3."
+                    + os.environ.get("AWS_REGION")
+                    + ".amazonaws.com/"
+                    + self.file_url
+                )
         else:
             return None
 
@@ -172,27 +170,32 @@ class Document(Base):
                     f'{os.environ.get("APP_API_URL")}/files/{self.file_thumbnail_url}'
                 )
             elif STORAGE_DRIVER == "s3":
-                return f'https://{os.environ.get("AWS_BUCKET")}.s3.{os.environ.get("AWS_REGION")}.amazonaws.com/{self.file_thumbnail_url}'
+                return (
+                    "https://"
+                    + os.environ.get("AWS_BUCKET")
+                    + ".s3."
+                    + os.environ.get("AWS_REGION")
+                    + ".amazonaws.com/"
+                    + self.file_thumbnail_url
+                )
         else:
             return None
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
         }
         data["file_url"] = self.full_file_url()
         data["file_thumbnail_url"] = self.full_file_thumbnail_url()
-        # Adding the related tables
+        # Add the related tables
         for c in self.__dict__:
             if "app" in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
         return data
 
 
-# Define a document model model using Base columns
 class DocumentModel(Base):
     __tablename__ = "document_model"
 
@@ -206,7 +209,6 @@ class DocumentModel(Base):
     # Relationships
     # model_name = db.relationship('ModelName', lazy='select', backref='document_model')
 
-    # New instance instantiation procedure
     def __init__(self, model_name, model_id, document_id):
         self.model_name = model_name
         self.model_id = model_id
@@ -217,7 +219,6 @@ class DocumentModel(Base):
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
@@ -229,7 +230,6 @@ class DocumentModel(Base):
         return data
 
 
-# Define a document sharing model using Base columns
 class DocumentSharing(Base):
     __tablename__ = "document_sharing"
 
@@ -240,7 +240,6 @@ class DocumentSharing(Base):
     # Relationships
     # model_name = db.relationship('ModelName', lazy='select', backref='document_sharing')
 
-    # New instance instantiation procedure
     def __init__(self, shared_user_id, document_id):
         self.shared_user_id = shared_user_id
         self.document_id = document_id
@@ -250,7 +249,6 @@ class DocumentSharing(Base):
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
