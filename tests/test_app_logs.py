@@ -1,33 +1,27 @@
-# -*- coding: utf-8 -*-
-"""
-Main testing script
+"""Tests for the logs module."""
 
-"""
-
-# Importing required models for assertion
+from app import AppSession
 from app.modules.users.models import User
 from app.modules.log.models import Log
 
-# Getting SQLalchemy session for the app
-from app import AppSession
-
-# Defining common data to be used within tests
-user_registration_data = {
+# Common data to be used within tests
+USER_REGISTRATION_DATA = {
     "name": "John Doe",
     "email": "john.doe@email.com",
     "password": "123456",
     "password_confirmation": "123456",
 }
-user_login_data = {
+USER_LOGIN_DATA = {
     "username": "john.doe@email.com",
     "password": "123456",
 }
 
 
-# Tests for logs management
 def test_logs(client, app):
+    """Tests for logs management."""
+
     # Creating user
-    client.post("/auth/register", json=user_registration_data)
+    client.post("/auth/register", json=USER_REGISTRATION_DATA)
 
     # Activate the user and setting its role as admin
     with AppSession() as session:
@@ -36,7 +30,7 @@ def test_logs(client, app):
         session.commit()
 
     # We should be able to login now
-    response = client.post("/auth/login", json=user_login_data)
+    response = client.post("/auth/login", json=USER_LOGIN_DATA)
 
     # Saving the user data
     user = response.json["data"]

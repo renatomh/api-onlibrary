@@ -1,28 +1,21 @@
-# -*- coding: utf-8 -*-
-"""
-Main testing script
+"""Tests for the settings module."""
 
-"""
-
-# Importing required models for assertion
+from app import AppSession
 from app.modules.users.models import User
 from app.modules.settings.models import UF, City
 
-# Getting SQLalchemy session for the app
-from app import AppSession
-
-# Defining common data to be used within tests
-user_registration_data = {
+# Common data to be used within tests
+USER_REGISTRATION_DATA = {
     "name": "John Doe",
     "email": "john.doe@email.com",
     "password": "123456",
     "password_confirmation": "123456",
 }
-user_login_data = {
+USER_LOGIN_DATA = {
     "username": "john.doe@email.com",
     "password": "123456",
 }
-ufs_data = [
+UFS_DATA = [
     {
         "code": "UF1",
         "name": "Unidade Federativa 1",
@@ -32,7 +25,7 @@ ufs_data = [
         "name": "Unidade Federativa 2",
     },
 ]
-cities_data = [
+CITIES_DATA = [
     {
         "name": "City 1",
         "uf_id": 1,
@@ -44,10 +37,11 @@ cities_data = [
 ]
 
 
-# Tests for UFs management
 def test_ufs(client):
+    """Tests for UFs management."""
+
     # Creating user
-    client.post("/auth/register", json=user_registration_data)
+    client.post("/auth/register", json=USER_REGISTRATION_DATA)
 
     # Activate the user and setting its role as admin
     with AppSession() as session:
@@ -56,7 +50,7 @@ def test_ufs(client):
         session.commit()
 
     # We should be able to login now
-    response = client.post("/auth/login", json=user_login_data)
+    response = client.post("/auth/login", json=USER_LOGIN_DATA)
 
     # Creating headers to set user authorization token
     headers = {"Authorization": f"Bearer {response.json['data']['token']}"}
@@ -67,7 +61,7 @@ def test_ufs(client):
     response = client.post(
         "/ufs",
         headers=headers,
-        json=ufs_data[0],
+        json=UFS_DATA[0],
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
@@ -90,7 +84,7 @@ def test_ufs(client):
     response = client.post(
         "/ufs",
         headers=headers,
-        json=ufs_data[1],
+        json=UFS_DATA[1],
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
@@ -135,10 +129,11 @@ def test_ufs(client):
     assert not response.json["meta"]["success"]
 
 
-# Tests for cities management
 def test_cities(client):
+    """Tests for cities management."""
+
     # Creating user
-    client.post("/auth/register", json=user_registration_data)
+    client.post("/auth/register", json=USER_REGISTRATION_DATA)
 
     # Activate the user and setting its role as admin
     with AppSession() as session:
@@ -147,7 +142,7 @@ def test_cities(client):
         session.commit()
 
     # We should be able to login now
-    response = client.post("/auth/login", json=user_login_data)
+    response = client.post("/auth/login", json=USER_LOGIN_DATA)
 
     # Creating headers to set user authorization token
     headers = {"Authorization": f"Bearer {response.json['data']['token']}"}
@@ -158,7 +153,7 @@ def test_cities(client):
     response = client.post(
         "/cities",
         headers=headers,
-        json=cities_data[0],
+        json=CITIES_DATA[0],
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
@@ -181,7 +176,7 @@ def test_cities(client):
     response = client.post(
         "/cities",
         headers=headers,
-        json=cities_data[1],
+        json=CITIES_DATA[1],
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]

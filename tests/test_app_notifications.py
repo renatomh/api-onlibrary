@@ -1,30 +1,22 @@
-# -*- coding: utf-8 -*-
-"""
-Main testing script
+"""Tests for the notifications module."""
 
-"""
+import urllib
+import json
+from datetime import datetime
 
-# Importing required models for assertion
+from config import tz
+from app import AppSession
 from app.modules.users.models import User
 from app.modules.notification.models import Notification
 
-# Getting SQLalchemy session for the app
-from app import AppSession
-
-# Other dependencies
-from config import tz
-from datetime import datetime
-import urllib
-import json
-
-# Defining common data to be used within tests
-user_registration_data = {
+# Common data to be used within tests
+USER_REGISTRATION_DATA = {
     "name": "John Doe",
     "email": "john.doe@email.com",
     "password": "123456",
     "password_confirmation": "123456",
 }
-user_login_data = {
+USER_LOGIN_DATA = {
     "username": "john.doe@email.com",
     "password": "123456",
 }
@@ -33,8 +25,9 @@ user_login_data = {
 dt_format = "%Y-%m-%dT%H:%M:%S%z"
 
 
-# Helper function to build query string from dicts
 def build_query_string(params):
+    """Helper function to build query string from dicts."""
+
     # Initializing the query params
     query_params = []
 
@@ -49,10 +42,11 @@ def build_query_string(params):
     return "&".join(query_params)
 
 
-# Tests for notifications management
 def test_notifications(client, app):
+    """Tests for notifications management."""
+
     # Creating user
-    client.post("/auth/register", json=user_registration_data)
+    client.post("/auth/register", json=USER_REGISTRATION_DATA)
 
     # Activate the user and setting its role as admin
     with AppSession() as session:
@@ -61,7 +55,7 @@ def test_notifications(client, app):
         session.commit()
 
     # We should be able to login now
-    response = client.post("/auth/login", json=user_login_data)
+    response = client.post("/auth/login", json=USER_LOGIN_DATA)
 
     # Saving the user data
     user = response.json["data"]
