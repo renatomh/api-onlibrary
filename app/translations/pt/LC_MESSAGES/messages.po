@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-11-07 14:07-0300\n"
+"POT-Creation-Date: 2024-10-30 18:01+0000\n"
 "PO-Revision-Date: 2022-03-11 14:58-0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: pt <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "Generated-By: Babel 2.9.1\n"
 
-#: app/__init__.py:160
+#: app/__init__.py:140
 msgid "You must provide the 'event' name."
 msgstr "Você deve fornecer o nome do evento ('event')."
 
-#: app/__init__.py:167
+#: app/__init__.py:147
 msgid ""
 "You must inform if message should be broadcast ('should_broadcast' flag as "
 "'true' or 'false')."
@@ -30,30 +30,30 @@ msgstr ""
 "Você deve informar se a mensagem deve ser transmitida a todos (flag "
 "'should_broadcast' como 'true' ou 'false')."
 
-#: app/__init__.py:179
+#: app/__init__.py:159
 msgid "You must inform the session ID ('sid') when not broadcasting."
 msgstr ""
 "Você deve informar o ID da sessão ('sid') quando não estiver transmitindo a "
 "todos."
 
-#: app/__init__.py:184
+#: app/__init__.py:164
 msgid "You must provide the message content as 'json' to be sent."
 msgstr ""
 "Você deve fornecer o conteúdo da mensagem (como 'json') a ser enviada."
 
-#: app/__init__.py:206 app/__init__.py:340
+#: app/__init__.py:181 app/__init__.py:302
 msgid "Message sent successfully"
 msgstr "Mensagem enviada com sucesso"
 
-#: app/__init__.py:278
+#: app/__init__.py:245
 msgid "You must provide the notification 'title'."
 msgstr "Você deve fornecer o título de notificação ('title')."
 
-#: app/__init__.py:281
+#: app/__init__.py:248
 msgid "You must provide the notification 'body'."
 msgstr "Você deve fornecer o corpo de notificação ('body')."
 
-#: app/__init__.py:288
+#: app/__init__.py:255
 msgid ""
 "You must inform if message should be multicast ('should_multicast' flag as "
 "'true' or 'false')."
@@ -61,51 +61,51 @@ msgstr ""
 "Você deve informar se a mensagem deve ser enviada a mais de um usuário (flag"
 " 'should_multicast' como 'true' ou 'false')."
 
-#: app/__init__.py:304
+#: app/__init__.py:271
 msgid "You must inform one token ('token') when not multicasting."
 msgstr ""
 "Você deve informar um token ('token') quando não estiver enviando a mais de "
 "um usuário."
 
-#: app/__init__.py:317
+#: app/__init__.py:284
 msgid "You must inform a list of tokens ('tokens') when multicasting."
 msgstr ""
 "Você deve informar uma lista de tokens ('tokens') quando estiver enviando a "
 "mais de um usuário."
 
-#: app/__init__.py:387
+#: app/__init__.py:351
 msgid "Resource not found."
 msgstr "Recurso não encontrado."
 
-#: app/__init__.py:401
+#: app/__init__.py:366
 msgid "Content too large"
 msgstr "Conteúdo muito longo"
 
-#: app/__init__.py:417
+#: app/__init__.py:383
 msgid "Ratelimit exceeded"
 msgstr "Taxa limite excedida"
 
-#: app/middleware.py:34 app/middleware.py:52 app/middleware.py:73
+#: app/middleware.py:34 app/middleware.py:54 app/middleware.py:74
 msgid "Authentication failed. Please login to access the resource."
 msgstr ""
 "Falha de autenticação. Por favor, faça o login para acessar o recurso."
 
-#: app/middleware.py:121 app/middleware.py:139
+#: app/middleware.py:124 app/middleware.py:141
 msgid ""
 "Authorization failed. Please use an account with the correct access rights."
 msgstr ""
 "Falha de autorização. Por favor, use uma conta com os privilégios de acesso "
 "corretos."
 
-#: app/modules/utils.py:416 app/modules/utils.py:425
+#: app/modules/utils.py:426 app/modules/utils.py:435
 msgid "Not a valid datetime value"
 msgstr "Valor de data e hora inválido"
 
-#: app/modules/utils.py:443 app/modules/utils.py:448
+#: app/modules/utils.py:453 app/modules/utils.py:458
 msgid "Not a valid date value"
 msgstr "Valor de data inválido"
 
-#: app/modules/utils.py:466 app/modules/utils.py:471
+#: app/modules/utils.py:476 app/modules/utils.py:481
 msgid "Not a valid time value"
 msgstr "Valor de hora inválido"
 
@@ -142,9 +142,8 @@ msgstr "O código já está em uso."
 #: app/modules/settings/controllers.py:512
 #: app/modules/users/controllers.py:255 app/modules/users/controllers.py:307
 #: app/modules/users/controllers.py:359 app/modules/users/controllers.py:965
-#: app/modules/users/controllers.py:1868 app/modules/users/controllers.py:1889
-#: app/modules/users/controllers.py:2065 app/modules/users/controllers.py:2086
-#: app/modules/users/controllers.py:2262 app/modules/users/controllers.py:2283
+#: app/modules/users/controllers.py:1859 app/modules/users/controllers.py:2026
+#: app/modules/users/controllers.py:2193
 msgid "No item found"
 msgstr "Nenhum item encontrado"
 
@@ -310,7 +309,7 @@ msgstr "Redefinição de senha OnLibrary"
 #: app/modules/users/controllers.py:1032 app/modules/users/controllers.py:1510
 #: app/modules/users/controllers.py:1546 app/modules/users/controllers.py:1591
 #: app/modules/users/controllers.py:1670 app/modules/users/controllers.py:1793
-#: app/modules/users/controllers.py:1995 app/modules/users/controllers.py:2192
+#: app/modules/users/controllers.py:1965 app/modules/users/controllers.py:2132
 msgid "No role found"
 msgstr "Nenhum perfil encontrado"
 
@@ -336,7 +335,7 @@ msgid "The route on the selected method is already in use for this role."
 msgstr ""
 "A rota no método selecionado já está em uso para este grupo de acesso."
 
-#: app/modules/users/controllers.py:2015 app/modules/users/controllers.py:2212
+#: app/modules/users/controllers.py:1985 app/modules/users/controllers.py:2152
 msgid "The action is already in use for this role."
 msgstr "A ação já está em uso para este grupo de acesso."
 
