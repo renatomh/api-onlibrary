@@ -1,32 +1,27 @@
-# Define the application directory
+"""Main app config file."""
+
 import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# Statement for enabling the development environment
 DEBUG = True
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-# Setting up the '.env' file with environment variables
 from dotenv import load_dotenv
 
 load_dotenv(".env")
 
-# Setting the flag for testing environment
 # The "TESTING" variable won't be set in the ".env" file, but directly in the
 # Tests configration file ("conftest.py")
 TESTING = os.getenv("TESTING", "False").lower() == "true"
 
-# Defining the default timezone for the application
 import pytz
 
 # If environment timezone name changes, all datetimes on database might have to be corrected
 tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-# This module is required for usernames and passwords with special characters
 from urllib.parse import quote
 
-# Define the database
 if os.environ.get("SQL_DRIVER") == "sqlite":
     # 'check_same_thread=False' arg is required when using SQLlite3 to avoid 'ProgrammingError'
     SQLALCHEMY_DATABASE_URI = (
@@ -62,8 +57,8 @@ elif os.environ.get("SQL_DRIVER") == "postgresql":
         + "/"
         + os.environ.get("SQL_DB")
     )
-# Currently, this is not available when running on Docker containers, since there are some troubles when
-# installing pyodbc on the Docker images
+# Currently, 'mssql' is not available when running on Docker containers, since there are troubles when installing
+# pyodbc on the Docker images
 elif os.environ.get("SQL_DRIVER") == "mssql":
     SQLALCHEMY_DATABASE_URI = (
         os.environ.get("SQL_DRIVER")
@@ -94,15 +89,13 @@ LANGUAGES = {
     "es": "Spanish",
 }
 
-# Define output folder path
+# Custom folder paths
 OUTPUT_FOLDER = os.path.join(BASE_DIR, "app" + os.sep + "output")
-# Define static folder path
 STATIC_FOLDER = os.path.join(BASE_DIR, "app" + os.sep + "static")
-# Define uploads folder path
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 UPLOAD_TEMP_FOLDER = os.path.join(BASE_DIR, "uploads" + os.sep + "tmp")
 
-# Defining max size and allowed extensions
+# Max size and allowed extensions for files upload
 MAX_CONTENT_LENGTH = 16 * 1000 * 1000  # MB * 1000 * 1000
 ALLOWED_FILE_EXTENSIONS = [
     "txt",
@@ -121,15 +114,14 @@ ALLOWED_VIDEO_EXTENSIONS = ["mp4", "m4v", "mkv", "mov", "wmv", "avi"]
 ALLOWED_FILE_EXTENSIONS.extend(ALLOWED_IMAGE_EXTENSIONS)
 ALLOWED_FILE_EXTENSIONS.extend(ALLOWED_VIDEO_EXTENSIONS)
 
-# Defining storage driver
 STORAGE_DRIVER = os.environ.get("STORAGE_DRIVER")
 
-# Defining mail driver and details
+# Mail driver and details
 MAIL_DRIVER = os.environ.get("MAIL_DRIVER")
 MAIL_USER = os.environ.get("MAIL_USER")
 MAIL_PASS = os.environ.get("MAIL_PASS")
 
-# Setting up allowed e-mail domains for registering
+# Allowed e-mail domains for registering
 ALLOWED_EMAIL_DOMAINS = [
     "gmail.com",
     "*",  # If we want to allow every domain, we can add the wildcard
@@ -151,6 +143,6 @@ CSRF_SESSION_KEY = os.environ.get("APP_SECRET")
 # Secret key for signing cookies
 SECRET_KEY = os.environ.get("APP_SECRET")
 
-# Defining serve port number and host
+# Serve port number and host
 PORT = os.environ.get("PORT")
 HOST = os.environ.get("HOST")
