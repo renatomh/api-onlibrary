@@ -1,31 +1,24 @@
-# -*- coding: utf-8 -*-
-"""
-Main testing script
+"""Tests for the documents module."""
 
-"""
+import os
 
-# Importing required models for assertion
+from app import AppSession
 from app.modules.users.models import User
 from app.modules.document.models import Document, DocumentCategory
 
-# Getting SQLalchemy session for the app
-from app import AppSession
 
-# Other dependencies
-import os
-
-# Defining common data to be used within tests
-user_registration_data = {
+# Common data to be used within tests
+USER_REGISTRATION_DATA = {
     "name": "John Doe",
     "email": "john.doe@email.com",
     "password": "123456",
     "password_confirmation": "123456",
 }
-user_login_data = {
+USER_LOGIN_DATA = {
     "username": "john.doe@email.com",
     "password": "123456",
 }
-document_categories_data = [
+DOCUMENT_CATEGORIES_DATA = [
     {
         "code": "DC-01",
         "name": "Document Category 01",
@@ -39,7 +32,7 @@ document_categories_data = [
         "name": "Document Category 03",
     },
 ]
-share_user_data = {
+SHARE_USER_DATA = {
     "name": "Jack Dan",
     "username": "jack.dan",
     "password": "123456",
@@ -50,10 +43,11 @@ share_user_data = {
 }
 
 
-# Tests for document categories management
 def test_document_categories(client):
+    """Tests for document categories management."""
+
     # Creating user
-    client.post("/auth/register", json=user_registration_data)
+    client.post("/auth/register", json=USER_REGISTRATION_DATA)
 
     # Activate the user and setting its role as admin
     with AppSession() as session:
@@ -62,20 +56,17 @@ def test_document_categories(client):
         session.commit()
 
     # We should be able to login now
-    response = client.post("/auth/login", json=user_login_data)
+    response = client.post("/auth/login", json=USER_LOGIN_DATA)
 
     # Creating headers to set user authorization token
     headers = {"Authorization": f"Bearer {response.json['data']['token']}"}
 
-    # Document categories routes
-
     # Creating a new document category
     response = client.post(
-        "/document-categories", headers=headers, json=document_categories_data[0]
+        "/document-categories", headers=headers, json=DOCUMENT_CATEGORIES_DATA[0]
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
-    # Saving new document category
     document_category1 = response.json["data"]
 
     # Trying to create a new document category with an already existing code
@@ -92,11 +83,10 @@ def test_document_categories(client):
 
     # Creating another document category
     response = client.post(
-        "/document-categories", headers=headers, json=document_categories_data[1]
+        "/document-categories", headers=headers, json=DOCUMENT_CATEGORIES_DATA[1]
     )
     assert response.status_code == 200
     assert response.json["meta"]["success"]
-    # Saving new document category
     document_category2 = response.json["data"]
 
     # Updating the created document category
@@ -141,10 +131,11 @@ def test_document_categories(client):
     assert not response.json["meta"]["success"]
 
 
-# Tests for documents management
 def test_documents(client):
+    """Tests for documents management."""
+
     # Creating user
-    client.post("/auth/register", json=user_registration_data)
+    client.post("/auth/register", json=USER_REGISTRATION_DATA)
 
     # Activate the user and setting its role as admin
     with AppSession() as session:
@@ -153,14 +144,14 @@ def test_documents(client):
         session.commit()
 
     # We should be able to login now
-    response = client.post("/auth/login", json=user_login_data)
+    response = client.post("/auth/login", json=USER_LOGIN_DATA)
 
     # Creating headers to set user authorization token
     headers = {"Authorization": f"Bearer {response.json['data']['token']}"}
 
     # Creating some test document categories
     test_document_categories = []
-    for document_category_data in document_categories_data:
+    for document_category_data in DOCUMENT_CATEGORIES_DATA:
         response = client.post(
             "/document-categories", headers=headers, json=document_category_data
         )
@@ -423,10 +414,11 @@ def test_documents(client):
     assert not response.json["meta"]["success"]
 
 
-# Tests for document models management
 def test_document_models(client):
+    """Tests for document models management."""
+
     # Creating user
-    client.post("/auth/register", json=user_registration_data)
+    client.post("/auth/register", json=USER_REGISTRATION_DATA)
 
     # Activate the user and setting its role as admin
     with AppSession() as session:
@@ -435,7 +427,7 @@ def test_document_models(client):
         session.commit()
 
     # We should be able to login now
-    response = client.post("/auth/login", json=user_login_data)
+    response = client.post("/auth/login", json=USER_LOGIN_DATA)
 
     # Creating headers to set user authorization token
     headers = {"Authorization": f"Bearer {response.json['data']['token']}"}
@@ -445,7 +437,7 @@ def test_document_models(client):
 
     # Creating some test document categories
     test_document_categories = []
-    for document_category_data in document_categories_data:
+    for document_category_data in DOCUMENT_CATEGORIES_DATA:
         response = client.post(
             "/document-categories", headers=headers, json=document_category_data
         )
@@ -532,10 +524,11 @@ def test_document_models(client):
     assert response.status_code == 204
 
 
-# Tests for document sharing
 def test_document_sharing(client):
+    """Tests for document sharing."""
+
     # Creating user
-    client.post("/auth/register", json=user_registration_data)
+    client.post("/auth/register", json=USER_REGISTRATION_DATA)
 
     # Activate the user and setting its role as admin
     with AppSession() as session:
@@ -544,7 +537,7 @@ def test_document_sharing(client):
         session.commit()
 
     # We should be able to login now
-    response = client.post("/auth/login", json=user_login_data)
+    response = client.post("/auth/login", json=USER_LOGIN_DATA)
 
     # Creating headers to set user authorization token
     headers = {"Authorization": f"Bearer {response.json['data']['token']}"}
@@ -554,7 +547,7 @@ def test_document_sharing(client):
 
     # Creating some test document categories
     test_document_categories = []
-    for document_category_data in document_categories_data:
+    for document_category_data in DOCUMENT_CATEGORIES_DATA:
         response = client.post(
             "/document-categories", headers=headers, json=document_category_data
         )
@@ -588,13 +581,13 @@ def test_document_sharing(client):
         test_documents.append(response.json["data"])
 
     # Creating another user to share documents with
-    response = client.post("/users", headers=headers, json=share_user_data)
+    response = client.post("/users", headers=headers, json=SHARE_USER_DATA)
     assert response.status_code == 200
     assert response.json["meta"]["success"]
     shared_user = response.json["data"]
 
     # Logging in with the shared user
-    response = client.post("/auth/login", json=share_user_data)
+    response = client.post("/auth/login", json=SHARE_USER_DATA)
 
     # Creating headers to set user authorization token
     share_headers = {"Authorization": f"Bearer {response.json['data']['token']}"}

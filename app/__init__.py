@@ -1,24 +1,27 @@
-# -*- coding: utf-8 -*-
-"""
-Refs:
-    * Flask Limiter Documentation: https://flask-limiter.readthedocs.io/en/stable/
+"""Main Flask applcation."""
 
-"""
-
-# Import flask and template operators
 import os
+import re
+import time
+
 from flask import Flask, jsonify, send_from_directory, redirect
 from flask.globals import request
-import re
-
-# Import SQLAlchemy
 from flask_sqlalchemy import SQLAlchemy
-
-# Sentry Application Performance Monitoring & Error Tracking
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_cors import CORS
+from flask_babel import Babel, _
+from flask_socketio import SocketIO, emit
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
+from flasgger import Swagger
+from werkzeug.utils import secure_filename
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-# Trying to initialize Sentry usage
+from config import SQLALCHEMY_DATABASE_URI, DATABASE_CONNECT_OPTIONS
+
+# Initialize Sentry
 try:
     sentry_sdk.init(
         dsn=os.getenv("SENTRY_DSN", None),
@@ -30,24 +33,20 @@ try:
         # We recommend adjusting this value in production.
         profiles_sample_rate=1.0,
     )
-# If soemthing goes wrong, we just ignore and inform about the error
+# If something goes wrong, we just ignore and log the error
 except Exception as e:
     print("It was not possible to setup Sentry, hence it won't be used", e)
 
-# Define the WSGI application object
 app = Flask(__name__)
 
 
-# This route is only used to trigger an error and check if Sentry is working properly
 @app.route("/debug-sentry")
 def trigger_error():
+    """This route is only used to trigger an error and check if Sentry is working properly."""
     1 / 0
 
 
-# Swagger documentation
-from flasgger import Swagger
-
-# Initialize Flasgger with app
+# Initialize Flasgger
 Swagger(
     app,
     template={
@@ -68,139 +67,236 @@ Swagger(
     },
 )
 
-# Configurations
 app.config.from_object("config")
 
-# Define the database object which is imported
-# by modules and controllers
+# Database object imported by modules and controllers
 db = SQLAlchemy(app)
 
-# Import Flask-Limiter
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+# We must wait for the app to be fully initialized to import middlewares, to avoid circular imports
+from app.middleware import ensure_authorized
 
-# Setting up limiter to avoid DOS attacks
+# Setting up limiter to avoid DOS attacks (https://flask-limiter.readthedocs.io/en/stable/)
 limiter = Limiter(app, key_func=get_remote_address, default_limits=["10/second"])
-
-# Import CORS
-from flask_cors import CORS
 
 # Allowing access through sites (such as when using ReactJS)
 CORS(app)
-
-# Import Flask-Babel
-from flask_babel import Babel, _
 
 # Adding internationalization and location to app
 babel = Babel(app)
 
 
-# Selecting language according to Accept-Language header from the incoming request
 @babel.localeselector
 def get_locale():
+    """Selects language according to Accept-Language header from the incoming request."""
     return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
 
-
-# Import Socket.IO
-from flask_socketio import SocketIO, emit
 
 # Creating the Socket.IO server
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 
-# Defining Socket.IO listeners
-# Event listener when client connects to the server
 @socketio.on("connect")
 def connected():
+    """Event listener when client connects to the server."""
     print(f"New client has connected (SID: {request.sid})")
 
 
-# Event listener for when client sends generic data via 'event'
 @socketio.on("event")
 def handle_message(data):
+    """Event listener for when client sends generic data via 'event'."""
     print(f"Data from client (SID: {request.sid}):", str(data))
     # emit("event", {'data': data, 'id': request.sid}, broadcast=True)
 
 
-# Event listener when client disconnects from the server
 @socketio.on("disconnect")
 def disconnected():
+    """Event listener when client disconnects from the server."""
     print(f"Client has disconnected (SID: {request.sid})")
 
 
-# Middlewares
-from app.middleware import ensure_authorized
-
-
-# API documentation link on root
 @app.route("/")
 def index():
+    """On the root endpoint, we'll redirect to the Swagger API documentation."""
     return redirect("apidocs", 302)
 
 
-# Setting up static files serving
 @app.route("/files/<path:path>")
 def files(path):
+    """Setting up static files serving."""
     return send_from_directory(os.path.join(app.config["UPLOAD_FOLDER"]), path)
 
 
-# Setting up sample Socket.IO messages sending route
-@app.route("/send_socketio_message", methods=["POST"])
+@app.route("/send-socketio-message", methods=["POST"])
 @ensure_authorized
 def send_socketio_message():
-    # For POST method
-    if request.method == "POST":
-        # Getting request data as a dict
-        data = request.json
+    """Sample Socket.IO messages sending route."""
 
-        # Creating a list with possible errors to be returned to the client
-        error_messages = []
-        # Checking if the event name was provided
-        if "event" not in data.keys() or not data["event"]:
-            error_messages.append(_("You must provide the 'event' name."))
-        # Checking if the broadcast flag was provided
-        if "should_broadcast" not in data.keys() or data["should_broadcast"] not in [
-            True,
-            False,
-        ]:
-            error_messages.append(
-                _(
-                    "You must inform if message should be broadcast "
-                    "('should_broadcast' flag as 'true' or 'false')."
-                )
-            )
-        # When not broadcasting, the session ID must be informed
-        if (
-            "should_broadcast" in data.keys()
-            and not data["should_broadcast"]
-            and ("sid" not in data.keys() or not data["sid"])
-        ):
-            error_messages.append(
-                _("You must inform the session ID ('sid') when not broadcasting.")
-            )
-        # Checking if the message content was provided
-        if "message" not in data.keys() or not data["message"]:
-            error_messages.append(
-                _("You must provide the message content as 'json' to be sent.")
-            )
-        # If there were errors on the request
-        if len(error_messages) > 0:
-            return (
-                jsonify(
-                    {"data": [], "meta": {"success": False, "errors": error_messages}}
-                ),
-                400,
-            )
+    data = request.json
 
-        # If everything is ok, we emit the message
-        # If it's a broadcast
-        if data["should_broadcast"]:
-            socketio.emit(data["event"], data["message"], broadcast=True)
-        # If it's a message for a specific client
+    # Creating a list with possible errors to be returned to the client
+    error_messages = []
+    # Checking if the event name was provided
+    if "event" not in data.keys() or not data["event"]:
+        error_messages.append(_("You must provide the 'event' name."))
+    # Checking if the broadcast flag was provided
+    if "should_broadcast" not in data.keys() or data["should_broadcast"] not in [
+        True,
+        False,
+    ]:
+        error_messages.append(
+            _(
+                "You must inform if message should be broadcast "
+                "('should_broadcast' flag as 'true' or 'false')."
+            )
+        )
+    # When not broadcasting, the session ID must be informed
+    if (
+        "should_broadcast" in data.keys()
+        and not data["should_broadcast"]
+        and ("sid" not in data.keys() or not data["sid"])
+    ):
+        error_messages.append(
+            _("You must inform the session ID ('sid') when not broadcasting.")
+        )
+    # Checking if the message content was provided
+    if "message" not in data.keys() or not data["message"]:
+        error_messages.append(
+            _("You must provide the message content as 'json' to be sent.")
+        )
+    # If there were errors on the request
+    if len(error_messages) > 0:
+        return (
+            jsonify({"data": [], "meta": {"success": False, "errors": error_messages}}),
+            400,
+        )
+
+    # If everything is ok, we emit the message (either broadcast or to specific client)
+    if data["should_broadcast"]:
+        socketio.emit(data["event"], data["message"], broadcast=True)
+    else:
+        socketio.emit(data["event"], data["message"], to=data["sid"])
+
+    return jsonify(
+        {
+            "data": {"message": _("Message sent successfully")},
+            "meta": {"success": True},
+        }
+    )
+
+
+# Import services
+from app.services.storage import store_file
+from app.services.push_notification import send_message, send_multicast_message
+
+
+@app.route("/files/upload", methods=["POST"])
+@ensure_authorized
+def upload_file():
+    """Files upload route."""
+
+    print(request.files)
+    file = request.files["file"]
+
+    # Setting filename with timestamp to create almost unique filename
+    filename = f"{round(time.time()*1000)}-{secure_filename(file.filename)}"
+
+    # Checking if file extension is allowed
+    if (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_FILE_EXTENSIONS"]
+    ):
+        # Loading to the temp folder
+        file.save(os.path.join(app.config["UPLOAD_TEMP_FOLDER"], filename))
+
+        # Calling the function to upload file to selected directory/container
+        upload_response = store_file(
+            os.path.join(app.config["UPLOAD_TEMP_FOLDER"], filename), filename
+        )
+
+        # Returning the upload response
+        return jsonify(upload_response)
+
+    return (
+        jsonify(
+            {
+                "data": {},
+                "meta": {
+                    "success": False,
+                    "errors": f"File extenstion not allowed {app.config['ALLOWED_FILE_EXTENSIONS']}",
+                },
+            }
+        ),
+        400,
+    )
+
+
+@app.route("/send-push-notification-message", methods=["POST"])
+@ensure_authorized
+def send_push_notification_message():
+    """Sample push notification message sending route function."""
+
+    # Getting request data as a dict
+    data = request.json
+
+    # Creating a list with possible errors to be returned to the client
+    error_messages = []
+    # Checking if the notification title was provided
+    if "title" not in data.keys() or not data["title"]:
+        error_messages.append(_("You must provide the notification 'title'."))
+    # Checking if the notification body was provided
+    if "body" not in data.keys() or not data["body"]:
+        error_messages.append(_("You must provide the notification 'body'."))
+    # Checking if the multicast flag was provided
+    if "should_multicast" not in data.keys() or data["should_multicast"] not in [
+        True,
+        False,
+    ]:
+        error_messages.append(
+            _(
+                "You must inform if message should be multicast "
+                "('should_multicast' flag as 'true' or 'false')."
+            )
+        )
+    # When not multicasting, one token must be provided
+    if (
+        "should_multicast" in data.keys()
+        and not data["should_multicast"]
+        and (
+            "token" not in data.keys()
+            or not data["token"]
+            or type(data["token"]) != str
+        )
+    ):
+        error_messages.append(
+            _("You must inform one token ('token') when not multicasting.")
+        )
+    # When multicasting, a list of tokens must be provided
+    if (
+        "should_multicast" in data.keys()
+        and data["should_multicast"]
+        and (
+            "tokens" not in data.keys()
+            or not data["tokens"]
+            or type(data["tokens"]) != list
+        )
+    ):
+        error_messages.append(
+            _("You must inform a list of tokens ('tokens') when multicasting.")
+        )
+    # If there were errors on the request
+    if len(error_messages) > 0:
+        return (
+            jsonify({"data": [], "meta": {"success": False, "errors": error_messages}}),
+            400,
+        )
+
+    # If everything is ok, we send the push notification message (either multicast or to specific client)
+    try:
+        if data["should_multicast"]:
+            send_multicast_message(data["tokens"], data["title"], data["body"])
         else:
-            socketio.emit(data["event"], data["message"], to=data["sid"])
+            send_message(data["token"], data["title"], data["body"])
 
-        # Informing user about success
         return jsonify(
             {
                 "data": {"message": _("Message sent successfully")},
@@ -208,153 +304,21 @@ def send_socketio_message():
             }
         )
 
-
-# Function for files upload
-from werkzeug.utils import secure_filename
-
-# Library to get current timestamp
-import time
-
-# Import services
-from app.services.storage import store_file
-from app.services.push_notification import send_message, send_multicast_message
-
-
-# Setting up uploads route
-@app.route("/files/upload", methods=["POST"])
-@ensure_authorized
-def upload_file():
-    # For POST method
-    if request.method == "POST":
-        print(request.files)
-        file = request.files["file"]
-        # Setting filename with timestamp to create almost unique filename
-        filename = f"{round(time.time()*1000)}-{secure_filename(file.filename)}"
-        # Checking if file extension is allowed
-        if (
-            "." in filename
-            and filename.rsplit(".", 1)[1].lower()
-            in app.config["ALLOWED_FILE_EXTENSIONS"]
-        ):
-            # Loading to the temp folder
-            file.save(os.path.join(app.config["UPLOAD_TEMP_FOLDER"], filename))
-
-            # Calling the function to upload file to selected directory/container
-            upload_response = store_file(
-                os.path.join(app.config["UPLOAD_TEMP_FOLDER"], filename), filename
-            )
-
-            # Returning the upload response
-            return jsonify(upload_response)
-
-        # Otherwise, we inform about the error
+    except Exception as e:
         return (
-            jsonify(
-                {
-                    "data": {},
-                    "meta": {
-                        "success": False,
-                        "errors": f"File extenstion not allowed {app.config['ALLOWED_FILE_EXTENSIONS']}",
-                    },
-                }
-            ),
-            400,
+            jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
+            500,
         )
 
 
-# Setting up sample push notification message sending route
-@app.route("/send_push_notification_message", methods=["POST"])
-@ensure_authorized
-def send_push_notification_message():
-    # For POST method
-    if request.method == "POST":
-        # Getting request data as a dict
-        data = request.json
-
-        # Creating a list with possible errors to be returned to the client
-        error_messages = []
-        # Checking if the notification title was provided
-        if "title" not in data.keys() or not data["title"]:
-            error_messages.append(_("You must provide the notification 'title'."))
-        # Checking if the notification body was provided
-        if "body" not in data.keys() or not data["body"]:
-            error_messages.append(_("You must provide the notification 'body'."))
-        # Checking if the multicast flag was provided
-        if "should_multicast" not in data.keys() or data["should_multicast"] not in [
-            True,
-            False,
-        ]:
-            error_messages.append(
-                _(
-                    "You must inform if message should be multicast "
-                    "('should_multicast' flag as 'true' or 'false')."
-                )
-            )
-        # When not multicasting, one token must be provided
-        if (
-            "should_multicast" in data.keys()
-            and not data["should_multicast"]
-            and (
-                "token" not in data.keys()
-                or not data["token"]
-                or type(data["token"]) != str
-            )
-        ):
-            error_messages.append(
-                _("You must inform one token ('token') when not multicasting.")
-            )
-        # When multicasting, a list of tokens must be provided
-        if (
-            "should_multicast" in data.keys()
-            and data["should_multicast"]
-            and (
-                "tokens" not in data.keys()
-                or not data["tokens"]
-                or type(data["tokens"]) != list
-            )
-        ):
-            error_messages.append(
-                _("You must inform a list of tokens ('tokens') when multicasting.")
-            )
-        # If there were errors on the request
-        if len(error_messages) > 0:
-            return (
-                jsonify(
-                    {"data": [], "meta": {"success": False, "errors": error_messages}}
-                ),
-                400,
-            )
-
-        # If everything is ok, we send the push notification message
-        try:
-            # If it's a multicast
-            if data["should_multicast"]:
-                send_multicast_message(data["tokens"], data["title"], data["body"])
-            # If it's a message for a specific client
-            else:
-                send_message(data["token"], data["title"], data["body"])
-
-            # Informing user about success
-            return jsonify(
-                {
-                    "data": {"message": _("Message sent successfully")},
-                    "meta": {"success": True},
-                }
-            )
-        # If an error occurs
-        except Exception as e:
-            return (
-                jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
-                500,
-            )
-
-
-# Available routes on the API
 @app.route("/routes", methods=["GET"])
 @ensure_authorized
 def routes():
+    """Returns available routes on the API."""
+
     routes = {"GET": [], "POST": [], "PUT": [], "PATCH": [], "DELETE": []}
-    # Running through all routes/rules
+
+    # Iterating through all routes/rules
     for rule in app.url_map.iter_rules():
         # Available data: rule, rule.endpoint, rule.methods, rule.arguments
         # Getting the route parts and formatting
@@ -379,9 +343,9 @@ def routes():
     return jsonify(routes)
 
 
-# Sample HTTP error handling
 @app.errorhandler(404)
 def not_found(error):
+    """Sample HTTP resource error handling."""
     return (
         jsonify(
             {"data": [], "meta": {"success": False, "errors": _("Resource not found.")}}
@@ -392,6 +356,7 @@ def not_found(error):
 
 @app.errorhandler(413)
 def content_size_handler(e):
+    """Sample content size error handling."""
     return (
         jsonify(
             {
@@ -408,6 +373,7 @@ def content_size_handler(e):
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
+    """Sample rate limit error handling."""
     return (
         jsonify(
             {
@@ -423,10 +389,6 @@ def ratelimit_handler(e):
 
 
 # Engine and Session for executing queries with ORM
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from config import SQLALCHEMY_DATABASE_URI, DATABASE_CONNECT_OPTIONS
-
 engine = create_engine(
     SQLALCHEMY_DATABASE_URI,
     echo=True,
@@ -436,14 +398,13 @@ engine = create_engine(
 # Defining a sessionmaker to use on modules routes
 AppSession = sessionmaker(engine)
 
-# Import a module / component using its blueprint handler variable (mod_auth)
+# Import and registering blueprints
 from app.modules.users.controllers import *
 from app.modules.log.controllers import *
 from app.modules.document.controllers import *
 from app.modules.notification.controllers import *
-from app.modules.settings.controllers import *
+from app.modules.commons.controllers import *
 
-# Register blueprint(s)
 # Users modules
 app.register_blueprint(mod_auth)
 app.register_blueprint(mod_profile)
@@ -454,8 +415,9 @@ app.register_blueprint(mod_role_web_action)
 app.register_blueprint(mod_role_mobile_action)
 # Notification modules
 app.register_blueprint(mod_notification)
-# Settings modules
+# Commons modules
 app.register_blueprint(mod_city)
+app.register_blueprint(mod_uf)
 # Document modules
 app.register_blueprint(mod_document_category)
 app.register_blueprint(mod_document)

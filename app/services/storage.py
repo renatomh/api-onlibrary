@@ -1,29 +1,32 @@
-# -*- coding: utf-8 -*-
+"""Third-party services to handle files storage."""
 
-# Module to get the environment variables
 import os
+import mimetypes
+from typing import Optional, Dict, Any
 
-# Module for AWS
 import boto3
 from botocore.exceptions import ClientError
 
-# Getting the required variables
 from config import UPLOAD_FOLDER
 
-# Moduloe to obtain ContentType from files
-import mimetypes
-
-# Disk Storage
 if os.environ.get("STORAGE_DRIVER") == "disk":
 
-    def store_file(file, object_name=None):
-        # If object_name was not specified, use file's current name
+    def store_file(file: str, object_name: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Stores a file on the local disk.
+
+        Args:
+            file (str): The path of the file to be stored.
+            object_name (Optional[str]): The name to save the file as; if None, uses the file's current name.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing metadata about the stored file.
+        """
         if object_name is None:
             object_name = os.path.basename(file)
 
-        # Moving file to new location
         try:
-            os.rename(file, UPLOAD_FOLDER + os.sep + object_name)
+            os.rename(file, os.path.join(UPLOAD_FOLDER, object_name))
             return {
                 "data": {
                     "object_name": object_name,
@@ -38,10 +41,18 @@ if os.environ.get("STORAGE_DRIVER") == "disk":
                 "errors": f"An error occurred while uploading the file: {e}",
             }
 
-    def remove_file(object_name):
-        # Removing the selected file by object name
+    def remove_file(object_name: str) -> Dict[str, Any]:
+        """
+        Removes a file from local disk storage.
+
+        Args:
+            object_name (str): The name of the file to remove.
+
+        Returns:
+            Dict[str, Any]: A dictionary indicating success or failure of the operation.
+        """
         try:
-            os.remove(UPLOAD_FOLDER + os.sep + object_name)
+            os.remove(os.path.join(UPLOAD_FOLDER, object_name))
             return {"data": {}, "meta": {"success": True}}
         except Exception as e:
             print("Error while removing file:", e)
@@ -50,17 +61,22 @@ if os.environ.get("STORAGE_DRIVER") == "disk":
                 "errors": f"An error occurred while removing the file: {e}",
             }
 
-
-# Amazon AWS S3
 elif os.environ.get("STORAGE_DRIVER") == "s3":
 
-    def store_file(file, object_name=None):
-        # Reference: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html
-        # If object_name was not specified, use file's current name
+    def store_file(file: str, object_name: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Stores a file in an S3 bucket.
+
+        Args:
+            file (str): The path of the file to be stored.
+            object_name (Optional[str]): The name to save the file as in S3; if None, uses the file's current name.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing metadata about the stored file.
+        """
         if object_name is None:
             object_name = os.path.basename(file)
 
-        # Create a new S3 resource and specify a region.
         client = boto3.client(
             "s3",
             region_name=os.environ.get("AWS_REGION"),
@@ -68,12 +84,12 @@ elif os.environ.get("STORAGE_DRIVER") == "s3":
             aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
         )
 
-        # Uploading the file
         try:
-            # Trying to get the file ContentType
-            content_type = None
-            if type(mimetypes.guess_type(file)) == tuple:
-                content_type = mimetypes.guess_type(file)[0]
+            content_type = (
+                mimetypes.guess_type(file)[0]
+                if isinstance(mimetypes.guess_type(file), tuple)
+                else None
+            )
 
             client.upload_file(
                 file,
@@ -81,12 +97,16 @@ elif os.environ.get("STORAGE_DRIVER") == "s3":
                 object_name,
                 ExtraArgs={"ACL": "public-read", "ContentType": content_type},
             )
-            # Removing the local file
             os.remove(file)
             return {
                 "data": {
                     "object_name": object_name,
-                    "file_url": f'https://{os.environ.get("AWS_BUCKET")}.s3.{os.environ.get("AWS_REGION")}.amazonaws.com/{object_name}',
+                    "file_url": "https://"
+                    + os.environ.get("AWS_BUCKET")
+                    + ".s3."
+                    + os.environ.get("AWS_REGION")
+                    + ".amazonaws.com/"
+                    + object_name,
                 },
                 "meta": {"success": True},
             }
@@ -99,8 +119,16 @@ elif os.environ.get("STORAGE_DRIVER") == "s3":
                 },
             }
 
-    def remove_file(object_name):
-        # Create a new S3 resource and specify a region.
+    def remove_file(object_name: str) -> Dict[str, Any]:
+        """
+        Removes a file from an S3 bucket.
+
+        Args:
+            object_name (str): The name of the file to remove.
+
+        Returns:
+            Dict[str, Any]: A dictionary indicating success or failure of the operation.
+        """
         client = boto3.client(
             "s3",
             region_name=os.environ.get("AWS_REGION"),
@@ -108,7 +136,6 @@ elif os.environ.get("STORAGE_DRIVER") == "s3":
             aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
         )
 
-        # Removing the file
         try:
             client.delete_object(Bucket=os.environ.get("AWS_BUCKET"), Key=object_name)
             return {"data": {}, "meta": {"success": True}}

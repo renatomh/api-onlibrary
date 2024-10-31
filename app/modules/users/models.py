@@ -1,23 +1,17 @@
-# -*- coding: utf-8 -*-
+"""Models for the users module."""
 
-# Import flask dependencies
 import os
-
-# Getting config data
-from config import tz
-
-# Import the database object (db) from the main application module
-from app import db
-
-# JWT for token generation
-import jwt
-
-# Library to deal with dates, UTC, etc.
 from datetime import datetime, timedelta
 
+import jwt
 
-# Function to format an object (like datetime/date) to a string
+from config import STORAGE_DRIVER, tz
+from app import db
+
+
 def default_object_string(object, timezone=tz):
+    """Function to format an object (like datetime/date) to a string."""
+
     if str(type(object)) == "<class 'datetime.datetime'>":
         try:
             return (
@@ -30,8 +24,9 @@ def default_object_string(object, timezone=tz):
     return object
 
 
-# Define a base model for other database tables to inherit
 class Base(db.Model):
+    """Base application model for other database tables to inherit."""
+
     __abstract__ = True
 
     # Defining base columns
@@ -44,7 +39,6 @@ class Base(db.Model):
     )
 
 
-# Define a User model using Base columns
 class User(Base):
     __tablename__ = "user"
 
@@ -61,7 +55,7 @@ class User(Base):
     socketio_sid = db.Column(db.String(256), nullable=True)
     fcm_token = db.Column(db.String(512), nullable=True)
 
-    # Authorisation Data: role & status
+    # Authorization Data: role & status
     role_id = db.Column(db.Integer, db.ForeignKey("role.id"), nullable=False)
     is_active = db.Column(db.Integer, nullable=False)
     is_verified = db.Column(db.Integer, nullable=False)
@@ -74,7 +68,6 @@ class User(Base):
     )
     notification = db.relationship("Notification", lazy="select", backref="user")
 
-    # New instance instantiation procedure
     def __init__(
         self,
         name,
@@ -94,33 +87,47 @@ class User(Base):
         self.is_verified = is_verified
 
     def __repr__(self):
-        return "<User %r>" % (self.name)
+        return "<User %r>" % (self.username)
 
     # Defining URL according to the storage driver
     def full_avatar_url(self):
         if self.avatar_url is not None and self.avatar_url != "":
-            if os.environ.get("STORAGE_DRIVER") == "disk":
+            if STORAGE_DRIVER == "disk":
                 return f'{os.environ.get("APP_API_URL")}/files/{self.avatar_url}'
-            elif os.environ.get("STORAGE_DRIVER") == "s3":
-                return f'https://{os.environ.get("AWS_BUCKET")}.s3.{os.environ.get("AWS_REGION")}.amazonaws.com/{self.avatar_url}'
+            elif STORAGE_DRIVER == "s3":
+                return (
+                    "https://"
+                    + os.environ.get("AWS_BUCKET")
+                    + ".s3."
+                    + os.environ.get("AWS_REGION")
+                    + ".amazonaws.com/"
+                    + self.avatar_url
+                )
         else:
             return None
 
     # Defining URL according to the storage driver
     def full_avatar_thumbnail_url(self):
         if self.avatar_thumbnail_url is not None and self.avatar_thumbnail_url != "":
-            if os.environ.get("STORAGE_DRIVER") == "disk":
+            if STORAGE_DRIVER == "disk":
                 return (
                     f'{os.environ.get("APP_API_URL")}/files/{self.avatar_thumbnail_url}'
                 )
-            elif os.environ.get("STORAGE_DRIVER") == "s3":
-                return f'https://{os.environ.get("AWS_BUCKET")}.s3.{os.environ.get("AWS_REGION")}.amazonaws.com/{self.avatar_thumbnail_url}'
+            elif STORAGE_DRIVER == "s3":
+                return (
+                    "https://"
+                    + os.environ.get("AWS_BUCKET")
+                    + ".s3."
+                    + os.environ.get("AWS_REGION")
+                    + ".amazonaws.com/"
+                    + self.avatar_thumbnail_url
+                )
         else:
             return None
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
+        # We should remove the password hash for privacy
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
@@ -128,7 +135,7 @@ class User(Base):
         }
         data["avatar_url"] = self.full_avatar_url()
         data["avatar_thumbnail_url"] = self.full_avatar_thumbnail_url()
-        # Adding the related tables
+        # Add the related tables
         for c in self.__dict__:
             if "app" in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
@@ -146,11 +153,11 @@ class User(Base):
         except Exception as e:
             return e
 
-    # Decoding the verification JWT
+    # Decoding the verification token
     @staticmethod
     def decode_verif_token(token):
         try:
-            # For newer versions of PyJWT (>= 2.0.0), we must add the 'algorithms' arg
+            # For newer versions of PyJWT (>= 2.0.0), we must add the 'algorithms' arg. This is essential for security
             payload = jwt.decode(
                 token, os.environ.get("APP_SECRET"), algorithms=["HS256"]
             )
@@ -170,11 +177,11 @@ class User(Base):
         except Exception as e:
             return e
 
-    # Decoding the authentication JWT
+    # Decoding the authentication token
     @staticmethod
     def decode_auth_token(token):
         try:
-            # For newer versions of PyJWT (>= 2.0.0), we must add the 'algorithms' arg
+            # For newer versions of PyJWT (>= 2.0.0), we must add the 'algorithms' arg. This is essential for security
             payload = jwt.decode(
                 token, os.environ.get("APP_SECRET"), algorithms=["HS256"]
             )
@@ -185,7 +192,6 @@ class User(Base):
             return "Invalid token. Please log in again."
 
 
-# Define a Role model using Base columns
 class Role(Base):
     __tablename__ = "role"
 
@@ -194,7 +200,7 @@ class Role(Base):
 
     # Relationships
     user = db.relationship("User", lazy="select", backref="role")
-    # We'll cascade delete the APi routes, web and mobile actions when removing the role
+    # We'll cascade delete the API routes, web and mobile actions when removing the role
     role_api_route = db.relationship(
         "RoleAPIRoute", lazy="select", backref="role", cascade="all, delete"
     )
@@ -205,7 +211,6 @@ class Role(Base):
         "RoleMobileAction", lazy="select", backref="role", cascade="all, delete"
     )
 
-    # New instance instantiation procedure
     def __init__(self, name):
         self.name = name
 
@@ -214,19 +219,17 @@ class Role(Base):
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
         }
-        # Adding the related tables
+        # Add the related tables
         for c in self.__dict__:
             if "app" in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
         return data
 
 
-# Define a Role API Route model using Base columns
 class RoleAPIRoute(Base):
     __tablename__ = "role_api_route"
 
@@ -240,7 +243,6 @@ class RoleAPIRoute(Base):
     # Relationships
     # model_name = db.relationship('ModelName', lazy='select', backref='role_api_route')
 
-    # New instance instantiation procedure
     def __init__(self, route, method, role_id):
         self.route = route
         self.method = method
@@ -251,19 +253,17 @@ class RoleAPIRoute(Base):
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
         }
-        # Adding the related tables
+        # Add the related tables
         for c in self.__dict__:
             if "app" in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
         return data
 
 
-# Define a Role web action model using Base columns
 class RoleWebAction(Base):
     __tablename__ = "role_web_action"
 
@@ -276,7 +276,6 @@ class RoleWebAction(Base):
     # Relationships
     # model_name = db.relationship('ModelName', lazy='select', backref='role_web_action')
 
-    # New instance instantiation procedure
     def __init__(self, action, role_id):
         self.action = action
         self.role_id = role_id
@@ -286,19 +285,17 @@ class RoleWebAction(Base):
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
         }
-        # Adding the related tables
+        # Add the related tables
         for c in self.__dict__:
             if "app" in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
         return data
 
 
-# Define a Role mobile action model using Base columns
 class RoleMobileAction(Base):
     __tablename__ = "role_mobile_action"
 
@@ -311,7 +308,6 @@ class RoleMobileAction(Base):
     # Relationships
     # model_name = db.relationship('ModelName', lazy='select', backref='role_mobile_action')
 
-    # New instance instantiation procedure
     def __init__(self, action, role_id):
         self.action = action
         self.role_id = role_id
@@ -321,12 +317,11 @@ class RoleMobileAction(Base):
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
         }
-        # Adding the related tables
+        # Add the related tables
         for c in self.__dict__:
             if "app" in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)

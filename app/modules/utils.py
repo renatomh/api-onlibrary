@@ -1,43 +1,31 @@
-# -*- coding: utf-8 -*-
+"""Main modules util functions."""
 
-# Import dependencies
 import ast
 import re
-
-# JSON parsing
 import json
-
-# Dependencies for custom wtforms validator
-from wtforms.validators import ValidationError
-from wtforms import widgets, Field
+import logging
 from datetime import datetime
 
-# Getting config variables
-from config import tz
-
-# SQLAlchemy dependencies
+from wtforms.validators import ValidationError
+from wtforms import widgets, Field
 from sqlalchemy import or_
 
-# Logging
-import logging
-
-# Importing the modules models
+from config import tz
 from app.modules.users.models import *
 from app.modules.notification.models import *
-from app.modules.settings.models import *
+from app.modules.commons.models import *
 from app.modules.document.models import *
 from app.modules.log.models import *
 
 
-# Function to get a model relationships
 def get_model_relationships(model):
-    # Getting the list of relationships in the model
+    """Gets the relationships of a SQLALchemy model."""
+
     model_relationships = {}
     for r in list(model.__mapper__.relationships):
-        # Getting the model attribute name
+        # Get model attribute name
         model_attr = str(r).replace(model.__name__ + ".", "")
-        # Getting the related models
-        # Checking if it's a many-to-many relationship or not
+        # Get related models, checking if it's a many-to-many relationship or not
         if not r.__dict__["uselist"]:
             model_relationships[model_attr] = {
                 "model": eval(r.entity.class_.__name__),
@@ -51,16 +39,15 @@ def get_model_relationships(model):
     return model_relationships
 
 
-# Function to get the sorting attributes for a call
 def get_sort_attrs(model, sort):
+    """Gets sorting attributes, given a formatted sorting object."""
+
     # If no sorting attributes were provided, we'll use the 'id' by default
     if sort == '"[]"':
         sort = '[{"property": "id", "direction": "ASC"}]'
 
-    # Getting the model relationships
     model_relationships = get_model_relationships(model)
 
-    # Retrieving the sorting attributes
     sort_attrs = []
     for s in json.loads(sort):
         # Initizaling the sort model as the query model and the property name
@@ -72,11 +59,11 @@ def get_sort_attrs(model, sort):
             # If it refers to a relationship property, we need to select the model where to get the attrs from
             input_relationship = s["property"].split(".")[0]
 
-            # For a one-to-many relationship
+            # one-to-many relationship
             if model_relationships[input_relationship]["kind"] == "one":
                 sort_model = model_relationships[input_relationship]["model"]
 
-            # For a many-to-many relationship
+            # many-to-many relationship
             elif model_relationships[input_relationship]["kind"] == "many":
                 sort_model = model_relationships[input_relationship]["model"].c
 
@@ -86,20 +73,21 @@ def get_sort_attrs(model, sort):
         sort_attrs.append(
             getattr(getattr(sort_model, property), s["direction"].lower())()
         )
+
     return sort_attrs
 
 
-# Function to get the join attributes/relationships for a call
 def get_join_attrs(model, filter, sort):
+    """Gets join attributes, given formatted filter and sort objects."""
+
     # If no filtering or sorting attributes were provided, we'll use default values
     if filter == '"[]"':
         filter = '[{"property":"id","value":"","anyMatch":true,"joinOn":"and","operator":"like"}]'
     if sort == '"[]"':
         sort = '[{"property": "id", "direction": "ASC"}]'
 
-    # Getting the model relationships
     model_relationships = get_model_relationships(model)
-    # Retrieving the join attributes
+
     join_attrs = []
     # Joins required by filters
     for f in json.loads(filter):
@@ -121,11 +109,13 @@ def get_join_attrs(model, filter, sort):
                 # We add it to the join list if not already present
                 if model_relationships[input_relationship]["model"] not in join_attrs:
                     join_attrs.append(model_relationships[input_relationship]["model"])
+
     return join_attrs
 
 
-# Function to check for datetime object/strings
 def format_filter_parameter(object, timezone=tz):
+    """Function to check for, extract and format datetime object/strings."""
+
     # If the string is formatted as a datetime
     try:
         # We'll get the datetime on specified timezone
@@ -139,21 +129,19 @@ def format_filter_parameter(object, timezone=tz):
         return object
 
 
-# Function to get the filtering attributes for a call
 def get_filter_attrs(model, filter, timezone=tz):
+    """Gets filtering attributes, given a formatted filtering object."""
+
     # If no filtering attributes were provided, we'll make it empty by default
     if filter == '"[]"':
         filter = '[{"property":"id","value":"","anyMatch":true,"joinOn":"and","operator":"like"}]'
 
-    # Getting the model relationships
     model_relationships = get_model_relationships(model)
 
-    # Retrieving the 'and' filtering attributes
+    # Retrieving 'and' and 'or' filtering attributes
     and_filter_attrs = []
-    # Retrieving the 'or' filtering attributes
     or_filter_attrs = []
 
-    # For each property to be filtered
     for f in json.loads(filter):
         # Initizaling the filter model as the query model and the property name
         filter_model = model
@@ -321,37 +309,37 @@ def get_filter_attrs(model, filter, timezone=tz):
                     )
                 )
 
-    # Now, the two filtering attributes list must be concatenated
+    # Concatenating the filtering attributes lists (for 'and' and 'or')
     filter_attrs = []
-    # Extending for the 'and' filters
     if len(and_filter_attrs) > 0:
         filter_attrs.extend(and_filter_attrs)
-    # Extending for the 'or' filters
     if len(or_filter_attrs) > 0:
         filter_attrs.append(or_(*or_filter_attrs))
 
-    # Returning the obtained filters
     return filter_attrs
 
 
-# Function to append data to log files
 def log(file, message, level, log_format=None):
-    # Creating a new file handler
+    """Logs data fo log file."""
+
+    # Create a new file handler
     info_log = logging.FileHandler(file)
+
     # If no log format was provided, we use a default one
     if log_format is None:
         log_format = logging.Formatter(
             "%(asctime)s [%(levelname)s]: %(message)s",
             "%Y-%m-%d %H:%M:%S",  # Datetime format
         )
-    # Setting te defined format
+
+    # Set defined format
     info_log.setFormatter(log_format)
-    # Creating the logger for the file
+    # Create the logger for the file
     logger = logging.getLogger(file)
-    # Setting a threshold for the levels to be logged
+    # Set a threshold for the levels to be logged
     logger.setLevel(level)
 
-    # If there's not logger handler
+    # If there's no logger handler
     if not logger.handlers:
         # Adding a new handler
         logger.addHandler(info_log)
@@ -371,12 +359,10 @@ def log(file, message, level, log_format=None):
     info_log.close()
     logger.removeHandler(info_log)
 
-    # Returning the function
-    return
 
-
-# Custom wtforms required conditional field
 class RequiredIf(object):
+    """Custom wtforms required conditional field."""
+
     def __init__(self, message=None, **kwargs):
         self.conditions = kwargs
         self.message = message
@@ -397,9 +383,10 @@ class RequiredIf(object):
                     raise ValidationError(message)
 
 
-# Custom wtforms 'DateTimeField' validator, which checks for data type
 class DateTimeField(Field):
     """
+    Custom wtforms 'DateTimeField' validator, which checks for data type.
+
     A text field which stores a `datetime.datetime` matching a format.
     """
 
@@ -435,10 +422,11 @@ class DateTimeField(Field):
                 raise ValueError(self.gettext("Not a valid datetime value"))
 
 
-# Custom wtforms 'DateField' validator, which checks for data type
 class DateField(DateTimeField):
     """
-    Same as DateTimeField, except stores a `datetime.date`.
+    Custom wtforms 'DateField' validator, which checks for data type.
+
+    Same as DateTimeField, except it stores a `datetime.date`.
     """
 
     def __init__(self, label=None, validators=None, format="%Y-%m-%d", **kwargs):
@@ -458,10 +446,11 @@ class DateField(DateTimeField):
                 raise ValueError(self.gettext("Not a valid date value"))
 
 
-# Custom wtforms 'TimeField' validator, which checks for data type
 class TimeField(DateTimeField):
     """
-    Same as DateTimeField, except stores a `time`.
+    Custom wtforms 'TimeField' validator, which checks for data type.
+
+    Same as DateTimeField, except it stores a `time`.
     """
 
     def __init__(self, label=None, validators=None, format="%H:%M", **kwargs):

@@ -1,60 +1,36 @@
-# -*- coding: utf-8 -*-
-"""
-Refs:
-    * Flask Request Documentation: https://tedboy.github.io/flask/generated/generated/flask.Request.html
-    * SQLAlchemy Operator Reference: https://docs.sqlalchemy.org/en/14/core/operators.html
+"""Controllers and blueprins/endpoints for the notifications module."""
 
-"""
-
-# Import flask dependencies
-from flask import Blueprint, request, jsonify, g
-from flask_babel import _
-
-# Swagger documentation
-from flasgger import swag_from
-
-# Function to be called on 'eval', in order to join models relationships
-from sqlalchemy.orm import selectinload
-
-# Session maker to allow database communication
-from app import AppSession
-
-# Config variables
-from config import tz
-
-# Import dependencies
 from datetime import datetime
 import pytz
 
-# Middlewares
+from flask import Blueprint, request, jsonify, g
+from flask_babel import _
+from flasgger import swag_from
+from sqlalchemy.orm import selectinload  # This function is called within 'eval'
+
+from app import AppSession
+from config import tz
 from app.middleware import ensure_authenticated, ensure_authorized
-
-# Import module forms
 from app.modules.notification.forms import *
-
-# Import module models
 from app.modules.notification.models import *
 from app.modules.users.models import *
-from app.modules.settings.models import *
-
-# Utilities functions
+from app.modules.commons.models import *
 from app.modules.utils import get_sort_attrs, get_join_attrs, get_filter_attrs
 from app.modules.notification.utils import *
 
-# Define the blueprint: 'auth', set its url prefix: app.url/auth
+# Blueprints for the model
 mod_notification = Blueprint("notifications", __name__, url_prefix="/notifications")
 
 
-# Set the route and accepted methods
 @mod_notification.route("", methods=["GET"])
 @ensure_authorized
 @swag_from("swagger/index_item.yml")
 def index_notification():
-    # Only GET method is allowed, so we don't have to check the method here
+    """Lists the existing notifications."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -66,7 +42,6 @@ def index_notification():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = Notification
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
@@ -74,11 +49,8 @@ def index_notification():
 
     # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -101,23 +73,21 @@ def index_notification():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_notification.route("/my", methods=["GET"])
 @ensure_authenticated
 @swag_from("swagger/index_my_item.yml")
 def index_my_notification():
-    # Only GET method is allowed, so we don't have to check the method here
+    """Lists the notifications for a specific user."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -129,7 +99,6 @@ def index_my_notification():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = Notification
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
@@ -137,11 +106,8 @@ def index_my_notification():
 
     # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -166,34 +132,28 @@ def index_my_notification():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_notification.route("", methods=["POST"])
 @ensure_authorized
 @swag_from("swagger/create_item.yml")
 def create_notification():
-    # Only POST method is allowed, so we don't have to check the method here
-    # If data form is submitted
-    form = CreateNotificationForm.from_json(request.json)
-    # Getting the model
-    model = Notification
+    """Creates a new notification for an user."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = CreateNotificationForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
+        model = Notification
         # Checking if user exists
         user = session.query(User).get(form.user_id.data)
         if user is None:
@@ -224,7 +184,7 @@ def create_notification():
             )
 
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
+
         except Exception as e:
             session.rollback()
             return (
@@ -233,15 +193,13 @@ def create_notification():
             )
 
 
-# Set the route and accepted methods
 @mod_notification.route("/<int:id>", methods=["GET"])
 @ensure_authenticated
 @swag_from("swagger/get_item_by_id.yml")
 def get_notification_by_id(id):
-    # Only GET method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Gets an existing notification by its id."""
+
     with AppSession() as session:
-        # Getting the model
         model = Notification
         selectinloads = eval(
             "".join(
@@ -256,7 +214,6 @@ def get_notification_by_id(id):
         if item:
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
-        # If no item is found
         return (
             jsonify(
                 {"data": [], "meta": {"success": False, "errors": _("No item found")}}
@@ -265,26 +222,26 @@ def get_notification_by_id(id):
         )
 
 
-# Set the route and accepted methods
 @mod_notification.route("/<int:id>", methods=["PUT"])
 @ensure_authorized
 def update_notification(id):
-    # Only PUT method is allowed, so we don't have to check the method here
-    # If data form is submitted
-    form = UpdateNotificationForm.from_json(request.json)
-    # Getting the model
-    model = Notification
+    """
+    Updates an existing notification.
 
-    # If something goes wrong when validating provided data
+    Note: this endpoint might not be really useful for most of web apps. It's not likely that a notification would be
+    updated. We can think about removing this later.
+    """
+
+    # Validates provided data
+    form = UpdateNotificationForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
+        model = Notification
         # Getting the item to be updated
         item = session.query(model).get(id)
         # If no item is found
@@ -312,30 +269,23 @@ def update_notification(id):
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_notification.route("/<int:id>/read", methods=["PUT"])
 @ensure_authenticated
 @swag_from("swagger/set_read_notification.yml")
 def set_read_notification(id):
-    # Only PATCH method is allowed, so we don't have to check the method here
-    # If data form is submitted
-    form = ReadNotificationForm.from_json(request.json)
-    # Getting the model
-    model = Notification
+    """Sets a notification as read/unread."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = ReadNotificationForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
@@ -359,8 +309,8 @@ def set_read_notification(id):
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
+        model = Notification
         # Getting the item to be updated
         item = session.query(model).get(id)
         # If no item is found
@@ -392,9 +342,8 @@ def set_read_notification(id):
                 400,
             )
 
-        # Updating the item
+        # Update the item
         item.read_at = form.read_at.data
-        # Setting the item read flag
         item.is_read = form.is_read.data
         # If notification is set as unread, we'll clear the read date
         if int(form.is_read.data) == 0:
@@ -404,26 +353,22 @@ def set_read_notification(id):
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_notification.route("/read-all", methods=["PUT"])
 @ensure_authenticated
 @swag_from("swagger/read_all_notifications.yml")
 def read_all_notifications():
-    # Getting the model
-    model = Notification
+    """Reads all notifications for the requestor user."""
 
-    # Creating the session for database communication
     with AppSession() as session:
+        model = Notification
         # Getting the items to be updated (all unread notifications for the user)
         items = (
             session.query(model)
@@ -444,23 +389,20 @@ def read_all_notifications():
                 }
             )
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_notification.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 @swag_from("swagger/delete_item.yml")
 def delete_notification(id):
-    # Only DELETE method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Deletes an existing notification."""
+
     with AppSession() as session:
         # Searching item by ID
         item = session.query(Notification).get(id)
@@ -477,12 +419,10 @@ def delete_notification(id):
                 404,
             )
 
-        # If the item is found
         try:
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -491,13 +431,12 @@ def delete_notification(id):
             )
 
 
-# Set the route and accepted methods
 @mod_notification.route("/<int:id>/my", methods=["DELETE"])
 @ensure_authenticated
 @swag_from("swagger/delete_my_item.yml")
 def delete_my_notification(id):
-    # Only DELETE method is allowed, so we don't have to check the method here
-    # Creating the session for database communication
+    """Deletes an existing notification from the requestor user."""
+
     with AppSession() as session:
         # Searching item by ID
         item = session.query(Notification).get(id)
@@ -514,7 +453,6 @@ def delete_my_notification(id):
                 404,
             )
 
-        # If the item is found
         # Checking if the requesting user is the notified user
         if item.user_id != g.user.id:
             return (
@@ -537,7 +475,6 @@ def delete_my_notification(id):
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (

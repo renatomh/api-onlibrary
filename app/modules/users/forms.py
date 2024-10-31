@@ -1,28 +1,13 @@
-# -*- coding: utf-8 -*-
+"""Validation forms for the users module."""
 
-# Import Form
 from wtforms import Form
-
-# Import JSON extension for forms
 import wtforms_json
-
-# Import Form elements such as TextField and BooleanField (optional)
-from wtforms import (
-    TextField,
-    RadioField,
-    IntegerField,
-    PasswordField,
-    FieldList,
-)  # BooleanField
-
-# Import Form validators
+from wtforms import TextField, RadioField, IntegerField, PasswordField
 from wtforms.validators import InputRequired, Email, EqualTo, Optional, Length
 
-# Initiating JSON for forms
 wtforms_json.init()
 
 
-# Define the login form (WTForms)
 class LoginForm(Form):
     username = TextField(
         "Email Address/Username",
@@ -36,7 +21,6 @@ class LoginForm(Form):
     )
 
 
-# Define the register form (WTForms)
 class RegisterForm(Form):
     name = TextField(
         "Name", [InputRequired(message="You must provide a name."), Length(max=128)]
@@ -62,7 +46,6 @@ class RegisterForm(Form):
     )
 
 
-# Define the register form (WTForms)
 class ForgotPasswordForm(Form):
     email = TextField(
         "Email Address",
@@ -74,7 +57,6 @@ class ForgotPasswordForm(Form):
     )
 
 
-# Define the reset password form (WTForms)
 class ResetPasswordForm(Form):
     reset_token = TextField(
         "Reset Token", [InputRequired(message="You must provide the reset token.")]
@@ -92,12 +74,10 @@ class ResetPasswordForm(Form):
     )
 
 
-# Define the verification email address form (WTForms)
 class VerifyEmailAddressForm(Form):
     token = TextField("Token", [InputRequired(message="You must provide a token.")])
 
 
-# Define the status change form (WTForms)
 class SetIsActiveForm(Form):
     is_active = RadioField(
         "Is Active",
@@ -110,7 +90,6 @@ class SetIsActiveForm(Form):
     )
 
 
-# Define the set user FCM token form (WTForms)
 class SetUserFCMTokenForm(Form):
     fcm_token = TextField(
         "FCM Token",
@@ -118,7 +97,6 @@ class SetUserFCMTokenForm(Form):
     )
 
 
-# Define the set user SocketIO SID form (WTForms)
 class SetUserSIDForm(Form):
     socketio_sid = TextField(
         "SocketIO SID",
@@ -126,7 +104,6 @@ class SetUserSIDForm(Form):
     )
 
 
-# Define the create user form (WTForms)
 class CreateUserForm(Form):
     name = TextField(
         "Name", [InputRequired(message="You must provide a name."), Length(max=128)]
@@ -161,14 +138,12 @@ class CreateUserForm(Form):
     email = TextField("Email Address", [Email(), Optional(), Length(max=128)])
 
 
-# Define the user role form (WTForms)
 class UserRoleForm(Form):
     role_id = IntegerField(
         "Role ID", [InputRequired(message="You must provide the role ID.")]
     )
 
 
-# Define the update profile form (WTForms)
 class UpdateProfileForm(Form):
     name = TextField("Name", [Optional(), Length(max=128)])
     username = TextField("Username", [Optional(), Length(max=128)])
@@ -177,7 +152,6 @@ class UpdateProfileForm(Form):
     password_confirmation = PasswordField("Password Confirmation", [Optional()])
 
 
-# Define the update user form (WTForms)
 class UpdateUserForm(Form):
     name = TextField("Name", [Optional(), Length(max=128)])
     username = TextField("Username", [Optional(), Length(max=128)])
@@ -186,19 +160,16 @@ class UpdateUserForm(Form):
     password_confirmation = PasswordField("Password Confirmation", [Optional()])
 
 
-# Define the create role form (WTForms)
 class CreateRoleForm(Form):
     name = TextField(
         "Name", [InputRequired(message="You must provide a name."), Length(max=128)]
     )
 
 
-# Define the update role form (WTForms)
 class UpdateRoleForm(Form):
     name = TextField("Name", [Optional(), Length(max=128)])
 
 
-# Define the create role API route form (WTForms)
 class CreateRoleAPIRouteForm(Form):
     route = TextField(
         "Route", [InputRequired(message="You must provide a route."), Length(max=512)]
@@ -223,7 +194,6 @@ class CreateRoleAPIRouteForm(Form):
     )
 
 
-# Define the create role web action form (WTForms)
 class CreateRoleWebActionForm(Form):
     action = TextField(
         "Action",
@@ -234,7 +204,6 @@ class CreateRoleWebActionForm(Form):
     )
 
 
-# Define the create role mobile action form (WTForms)
 class CreateRoleMobileActionForm(Form):
     action = TextField(
         "Action",
@@ -245,6 +214,5 @@ class CreateRoleMobileActionForm(Form):
     )
 
 
-# Define the copy role form (WTForms)
 class CopyRoleForm(Form):
     name = TextField("Name", [Optional(), Length(max=128)])
