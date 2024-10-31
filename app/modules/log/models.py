@@ -1,17 +1,13 @@
-# -*- coding: utf-8 -*-
+"""Models for the logs module."""
 
-# Getting config data
 from config import tz
-
-# Import the database object (db) from the main application module
 from app import db
-
-# Import models
 from app.modules.users.models import *
 
 
-# Function to format an object (like datetime/date) to a string
 def default_object_string(object, timezone=tz):
+    """Function to format an object (like datetime/date) to a string."""
+
     if str(type(object)) == "<class 'datetime.datetime'>":
         try:
             return (
@@ -24,8 +20,9 @@ def default_object_string(object, timezone=tz):
     return object
 
 
-# Define a base model for other database tables to inherit
 class Base(db.Model):
+    """Base application model for other database tables to inherit."""
+
     __abstract__ = True
 
     # Defining base columns
@@ -38,7 +35,6 @@ class Base(db.Model):
     )
 
 
-# Define a log model using Base columns
 class Log(Base):
     __tablename__ = "log"
 
@@ -54,7 +50,6 @@ class Log(Base):
     # Relationships
     # model_name = db.relationship('ModelName', lazy='select', backref='log')
 
-    # New instance instantiation procedure
     def __init__(self, model_name, ip_address, description, model_id, user_id):
         self.model_name = model_name
         self.ip_address = ip_address
@@ -67,12 +62,11 @@ class Log(Base):
 
     # Returning data as dict
     def as_dict(self, timezone=tz):
-        # We also remove the password
         data = {
             c.name: default_object_string(getattr(self, c.name), timezone)
             for c in self.__table__.columns
         }
-        # Adding the related tables
+        # Add the related tables
         for c in self.__dict__:
             if "app" in str(type(self.__dict__[c])):
                 data[c] = self.__dict__[c].as_dict(timezone)
