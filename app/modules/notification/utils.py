@@ -1,21 +1,16 @@
-# -*- coding: utf-8 -*-
+"""Utilities for the notifications module."""
 
-# Import flask dependencies
 from flask_babel import _
 
-# Import Socket.IO dependencies
 from app import socketio
-
-# Import services
 from app.services.push_notification import send_message
-
-# Import module models
 from app.modules.users.models import *
 from app.modules.notification.models import *
 
 
-# Function to notify a user via Socket.IO (for front-end application)
 def notify_user_via_socketio(user_id, title, content, session, event="notification"):
+    """Notifies an user via Socket.IO (for front-end application)."""
+
     # Getting the user object
     user = session.query(User).get(user_id)
 
@@ -24,12 +19,10 @@ def notify_user_via_socketio(user_id, title, content, session, event="notificati
         # Emitting the notification to the use session ID
         socketio.emit(event, {"title": title, "content": content}, to=user.socketio_sid)
 
-    # In the end, we just return the function
-    return
 
-
-# Function to notify a user via push notifications (for mobile application)
 def notify_user_via_push_notification(user_id, title, content, session):
+    """Notifies an user via push notifications (for mobile application)."""
+
     # Getting the user object
     user = session.query(User).get(user_id)
 
@@ -42,11 +35,7 @@ def notify_user_via_push_notification(user_id, title, content, session):
         except Exception as e:
             print("Error while sending push notification", str(e))
 
-    # In the end, we just return the function
-    return
 
-
-# Function to generate a user notification and notify it on specified channels
 def notify_user(
     user_id,
     title,
@@ -57,6 +46,8 @@ def notify_user(
     send_socketio_notification=True,
     send_push_notification=True,
 ):
+    """Generates an user notification and notify it on specified channels."""
+
     # Checking if user exists
     user = User.query.get(user_id)
     if user is None:
@@ -78,6 +69,7 @@ def notify_user(
     # Notifying user on front-end
     if send_socketio_notification:
         notify_user_via_socketio(item.user_id, item.title, item.description, session)
+
     # Notifying user on mobile application
     if send_push_notification:
         notify_user_via_push_notification(
