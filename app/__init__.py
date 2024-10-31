@@ -403,7 +403,7 @@ from app.modules.users.controllers import *
 from app.modules.log.controllers import *
 from app.modules.document.controllers import *
 from app.modules.notification.controllers import *
-from app.modules.settings.controllers import *
+from app.modules.commons.controllers import *
 
 # Users modules
 app.register_blueprint(mod_auth)
@@ -415,8 +415,9 @@ app.register_blueprint(mod_role_web_action)
 app.register_blueprint(mod_role_mobile_action)
 # Notification modules
 app.register_blueprint(mod_notification)
-# Settings modules
+# Commons modules
 app.register_blueprint(mod_city)
+app.register_blueprint(mod_uf)
 # Document modules
 app.register_blueprint(mod_document_category)
 app.register_blueprint(mod_document)

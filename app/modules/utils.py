@@ -13,7 +13,7 @@ from sqlalchemy import or_
 from config import tz
 from app.modules.users.models import *
 from app.modules.notification.models import *
-from app.modules.settings.models import *
+from app.modules.commons.models import *
 from app.modules.document.models import *
 from app.modules.log.models import *
 

@@ -28,10 +28,10 @@ import pytz
 from app.middleware import ensure_authenticated, ensure_authorized
 
 # Import module forms
-from app.modules.settings.forms import *
+from app.modules.commons.forms import *
 
 # Import module models
-from app.modules.settings.models import *
+from app.modules.commons.models import *
 
 # Utilities functions
 from app.modules.utils import get_sort_attrs, get_join_attrs, get_filter_attrs

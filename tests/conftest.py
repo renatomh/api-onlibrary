@@ -21,7 +21,7 @@ from app import db
 
 # Blueprints
 from app.modules.users.controllers import *
-from app.modules.settings.controllers import *
+from app.modules.commons.controllers import *
 from app.modules.log.controllers import *
 from app.modules.notification.controllers import *
 from app.modules.document.controllers import *

@@ -17,7 +17,7 @@ from app.middleware import ensure_authenticated, ensure_authorized
 from app.modules.document.forms import *
 from app.modules.document.models import *
 from app.modules.users.models import *
-from app.modules.settings.models import *
+from app.modules.commons.models import *
 from app.modules.utils import get_sort_attrs, get_join_attrs, get_filter_attrs
 from app.modules.document.utils import notify_document_expiration
 

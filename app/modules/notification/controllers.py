@@ -14,7 +14,7 @@ from app.middleware import ensure_authenticated, ensure_authorized
 from app.modules.notification.forms import *
 from app.modules.notification.models import *
 from app.modules.users.models import *
-from app.modules.settings.models import *
+from app.modules.commons.models import *
 from app.modules.utils import get_sort_attrs, get_join_attrs, get_filter_attrs
 from app.modules.notification.utils import *
 

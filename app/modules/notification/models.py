@@ -3,7 +3,7 @@
 from config import tz
 from app import db
 from app.modules.users.models import *
-from app.modules.settings.models import *
+from app.modules.commons.models import *
 
 
 def default_object_string(object, timezone=tz):

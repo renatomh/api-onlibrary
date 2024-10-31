@@ -1,8 +1,8 @@
-"""Tests for the settings module."""
+"""Tests for the commons module."""
 
 from app import AppSession
 from app.modules.users.models import User
-from app.modules.settings.models import UF, City
+from app.modules.commons.models import UF, City
 
 # Common data to be used within tests
 USER_REGISTRATION_DATA = {

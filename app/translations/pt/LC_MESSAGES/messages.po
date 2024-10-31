@@ -113,8 +113,8 @@ msgstr "Valor de hora inválido"
 #: app/modules/document/controllers.py:253
 #: app/modules/document/controllers.py:614
 #: app/modules/document/controllers.py:819
-#: app/modules/settings/controllers.py:127
-#: app/modules/settings/controllers.py:215
+#: app/modules/commons/controllers.py:127
+#: app/modules/commons/controllers.py:215
 msgid "This code is already in use."
 msgstr "O código já está em uso."
 
@@ -134,12 +134,12 @@ msgstr "O código já está em uso."
 #: app/modules/notification/controllers.py:372
 #: app/modules/notification/controllers.py:474
 #: app/modules/notification/controllers.py:511
-#: app/modules/settings/controllers.py:166
-#: app/modules/settings/controllers.py:198
-#: app/modules/settings/controllers.py:255
-#: app/modules/settings/controllers.py:425
-#: app/modules/settings/controllers.py:457
-#: app/modules/settings/controllers.py:512
+#: app/modules/commons/controllers.py:166
+#: app/modules/commons/controllers.py:198
+#: app/modules/commons/controllers.py:255
+#: app/modules/commons/controllers.py:425
+#: app/modules/commons/controllers.py:457
+#: app/modules/commons/controllers.py:512
 #: app/modules/users/controllers.py:255 app/modules/users/controllers.py:307
 #: app/modules/users/controllers.py:359 app/modules/users/controllers.py:965
 #: app/modules/users/controllers.py:1859 app/modules/users/controllers.py:2026
@@ -149,7 +149,7 @@ msgstr "Nenhum item encontrado"
 
 #: app/modules/document/controllers.py:315
 #: app/modules/document/controllers.py:950
-#: app/modules/settings/controllers.py:271
+#: app/modules/commons/controllers.py:271
 #: app/modules/users/controllers.py:1116 app/modules/users/controllers.py:1686
 msgid "There are other items associated with this item"
 msgstr "Existem outros itens associados a este item"
@@ -268,8 +268,8 @@ msgstr "Somente o usuário notificado pode definir esta notificação como lida"
 msgid "Only the notified user can delete this notification"
 msgstr "Somente o usuário notificado pode excluir esta notificação"
 
-#: app/modules/settings/controllers.py:379
-#: app/modules/settings/controllers.py:473
+#: app/modules/commons/controllers.py:379
+#: app/modules/commons/controllers.py:473
 msgid "No UF found"
 msgstr "Nenhuma UF encontrada"
 

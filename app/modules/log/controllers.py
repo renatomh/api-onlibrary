@@ -12,7 +12,7 @@ from app.modules.log.forms import *
 from app.modules.log.models import *
 from app.modules.document.models import *
 from app.modules.users.models import *
-from app.modules.settings.models import *
+from app.modules.commons.models import *
 from app.modules.utils import get_sort_attrs, get_join_attrs, get_filter_attrs
 
 # Blueprints for the model
