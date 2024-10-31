@@ -1,73 +1,37 @@
-# -*- coding: utf-8 -*-
-"""
-Refs:
-    * Flask Request Documentation: https://tedboy.github.io/flask/generated/generated/flask.Request.html
-    * SQLAlchemy Operator Reference: https://docs.sqlalchemy.org/en/14/core/operators.html
+"""Controllers and blueprins/endpoints for the users module."""
 
-"""
-
-# Import flask dependencies
 from os import path, environ
+import re
+import time
+import pytz
+from datetime import datetime
+
 from flask import Blueprint, request, jsonify, g, render_template
 from flask_babel import _
-
-# Swagger documentation
+from sqlalchemy.orm import selectinload  # This function is called within 'eval'
+from werkzeug.utils import secure_filename
+from werkzeug.security import check_password_hash, generate_password_hash
 from flasgger import swag_from
 
-# Function to be called on 'eval', in order to join models relationships
-from sqlalchemy.orm import selectinload  # , noload
-
-# Import password / encryption helper tools
-from werkzeug.security import check_password_hash, generate_password_hash
-
-# Session maker to allow database communication
-from app import AppSession
-
-# SocketIO communication
-from app import socketio
-
-# Function for files upload
-from werkzeug.utils import secure_filename
-
-# Library to get current timestamp
-import time
-
-# Import services
+from app import AppSession, socketio
 from app.services.storage import store_file, remove_file
 from app.services.mail import send_mail
 from app.services.thumbnail import get_image_thumbnail
-
-# Config variables
 from config import (
     UPLOAD_TEMP_FOLDER,
     ALLOWED_IMAGE_EXTENSIONS,
     ALLOWED_EMAIL_DOMAINS,
     tz,
 )
-
-# Module for regular expressions
-import re
-
-# Import dependencies
-import pytz
-from datetime import datetime
-
-# Middlewares
 from app.middleware import ensure_authenticated, ensure_authorized
-
-# Import module forms
 from app.modules.users.forms import *
-
-# Import module models
 from app.modules.users.models import *
 from app.modules.notification.models import *
 from app.modules.log.models import *
 from app.modules.document.models import *
-
-# Utilities functions
 from app.modules.utils import get_sort_attrs, get_join_attrs, get_filter_attrs
 
-# Define the blueprint: 'auth', set its url prefix: app.url/auth
+# Blueprints for the model
 mod_auth = Blueprint("auth", __name__, url_prefix="/auth")
 mod_profile = Blueprint("profile", __name__, url_prefix="/profile")
 mod_user = Blueprint("users", __name__, url_prefix="/users")
@@ -83,16 +47,14 @@ mod_role_mobile_action = Blueprint(
 )
 
 
-# Set the route and accepted methods
 @mod_auth.route("/login", methods=["POST"])
 @swag_from("swagger/auth/login.yml")
 def login():
-    # If data form is submitted
-    form = LoginForm.from_json(request.json)
+    """Allows an user to login to the application."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = LoginForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
@@ -101,7 +63,6 @@ def login():
     # Defining regex to check if string contains valid email address
     email_regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Checking if an email address or username was provided
         if re.fullmatch(email_regex, form.username.data):
@@ -174,7 +135,6 @@ def login():
         if "User-Agent" in request.headers.keys():
             # Cropping for really long strings
             user_agent = request.headers["User-Agent"][:750]
-        # If it wasn't provided
         else:
             user_agent = _("Not provided")
 
@@ -187,7 +147,6 @@ def login():
             user_id=user.id,
         )
         session.add(log_item)
-        # Flushing and comitting the changes
         session.flush()
         session.commit()
         # Generating the JWT and returning data
@@ -195,24 +154,21 @@ def login():
         return jsonify({"data": data, "meta": {"success": True}})
 
 
-# Socket.IO event listener for when client set user's SID
 @socketio.on("set-user-token")
 def set_user_token(data):
-    # Info about data sent
+    """Listens to Socket.IO events, for when client set user's SID."""
+
     print(f"Setting client (SID: {request.sid}) user token {data}")
 
     # If no user token was provided, we just ignore and return
     if "user_token" not in data.keys():
         return
 
-    # Otherwise, we check if user token is valid
-    user_id = User.decode_auth_token(data["user_token"])
-
     # If token is not valid, we'll also ignore and return
+    user_id = User.decode_auth_token(data["user_token"])
     if type(user_id) is not int:
         return
 
-    # Creating the session for database communication
     with AppSession() as session:
         # If token is valid, we'll search the user by ID
         user = session.query(User).get(user_id)
@@ -221,27 +177,23 @@ def set_user_token(data):
             return
         # Otherwise, we'll set the Socket.IO session ID to the user
         user.socketio_sid = request.sid
-        # Flushing and comitting the changes
         session.flush()
         session.commit()
 
 
-# Set the route and accepted methods
 @mod_user.route("/<int:id>/fcm-token", methods=["PATCH"])
 @ensure_authorized
 def set_user_fcm_token(id):
-    # If data form is submitted
-    form = SetUserFCMTokenForm.from_json(request.json)
+    """Sets an user's FCM token."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = SetUserFCMTokenForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the item to be updated
         item = session.query(User).get(id)
@@ -269,7 +221,6 @@ def set_user_fcm_token(id):
             data["role"] = item.role.as_dict() if item.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -278,22 +229,19 @@ def set_user_fcm_token(id):
             )
 
 
-# Set the route and accepted methods
 @mod_user.route("/my/fcm-token", methods=["PATCH"])
 @ensure_authenticated
 def set_own_user_fcm_token():
-    # If data form is submitted
-    form = SetUserFCMTokenForm.from_json(request.json)
+    """Sets an user's own FCM token."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = SetUserFCMTokenForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the item to be updated
         item = session.query(User).get(g.user.id)
@@ -321,7 +269,6 @@ def set_own_user_fcm_token():
             data["role"] = item.role.as_dict() if item.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -330,22 +277,19 @@ def set_own_user_fcm_token():
             )
 
 
-# Set the route and accepted methods
 @mod_user.route("/my/sid", methods=["PATCH"])
 @ensure_authenticated
 def set_own_user_sid():
-    # If data form is submitted
-    form = SetUserSIDForm.from_json(request.json)
+    """Sets an user's SID."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = SetUserSIDForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the item to be updated
         item = session.query(User).get(g.user.id)
@@ -362,7 +306,7 @@ def set_own_user_sid():
                 404,
             )
 
-        # Setting the new FCM token for the user
+        # Setting the new SID for the user
         item.socketio_sid = form.socketio_sid.data
 
         # Updating the item
@@ -373,7 +317,6 @@ def set_own_user_sid():
             data["role"] = item.role.as_dict() if item.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -382,27 +325,24 @@ def set_own_user_sid():
             )
 
 
-# Set the route and accepted methods
 @mod_auth.route("/register", methods=["POST"])
 @swag_from("swagger/auth/register.yml")
 def register():
-    # If data form is submitted
-    form = RegisterForm.from_json(request.json)
+    """Registers a new user."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = RegisterForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Searching user by email address
         user = session.query(User).filter_by(email=form.email.data).first()
 
-        # If a user is found, returns information about the error
+        # If an user is found, returns information about the error
         if user:
             return (
                 jsonify(
@@ -465,8 +405,7 @@ def register():
         session.commit()
         verif_token = user.encode_verif_token(user.id)
 
-        # Creating verification email
-        # Replacing data on template
+        # Sending confirmation mail
         body_html = render_template(
             "emails/verify_email.html",
             **{
@@ -474,8 +413,6 @@ def register():
                 "link": f"{environ.get('APP_WEB_URL')}/auth/verify-email?token={verif_token}",
             },
         )
-
-        # Sending confirmation mail
         send_mail(
             recipients=[form.email.data],
             subject=_("Welcome to OnLibrary!"),
@@ -486,21 +423,18 @@ def register():
         return jsonify({"data": user.as_dict(), "meta": {"success": True}})
 
 
-# Set the route and accepted methods
 @mod_auth.route("/forgot-password", methods=["PUT"])
 def forgot_password():
-    # If data form is submitted
-    form = ForgotPasswordForm.from_json(request.json)
+    """Requests a password reset."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = ForgotPasswordForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Searching user by email address
         user = session.query(User).filter_by(email=form.email.data).first()
@@ -523,8 +457,7 @@ def forgot_password():
         # Creating the reset password token
         reset_token = user.encode_auth_token(user.id)
 
-        # Creating reset password email
-        # Replacing data on template
+        # Sending reset password mail
         body_html = render_template(
             "emails/forgot_password.html",
             **{
@@ -532,8 +465,6 @@ def forgot_password():
                 "link": f"{environ.get('APP_WEB_URL')}/auth/reset-password?reset_token={reset_token}",
             },
         )
-
-        # Sending reset password mail
         send_mail(
             recipients=[form.email.data],
             subject=_("OnLibrary Password Reset"),
@@ -544,15 +475,13 @@ def forgot_password():
         return jsonify({"data": user.as_dict(), "meta": {"success": True}})
 
 
-# Set the route and accepted methods
 @mod_auth.route("/reset-password", methods=["PUT"])
 def reset_password():
-    # If data form is submitted
-    form = ResetPasswordForm.from_json(request.json)
+    """Resets an user's password."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = ResetPasswordForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
@@ -564,7 +493,6 @@ def reset_password():
     if type(res) is not int:
         return jsonify({"data": [], "meta": {"success": False, "errors": res}}), 400
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the item to be updated
         user = session.query(User).get(res)
@@ -590,25 +518,21 @@ def reset_password():
             data["role"] = user.role.as_dict() if user.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_user.route("/verify", methods=["PUT"])
 def verify_email_address():
-    # If data form is submitted
-    form = VerifyEmailAddressForm.from_json(request.json)
+    """Verifies an email address."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = VerifyEmailAddressForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
@@ -620,7 +544,6 @@ def verify_email_address():
     if type(res) is not int:
         return jsonify({"data": [], "meta": {"success": False, "errors": res}}), 400
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the item to be updated
         user = session.query(User).get(res)
@@ -648,33 +571,28 @@ def verify_email_address():
             data["role"] = user.role.as_dict() if user.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_user.route("/<int:id>/is-active", methods=["PUT"])
 @ensure_authorized
 @swag_from("swagger/user/set_user_active.yml")
 def activate_user(id):
-    # If data form is submitted
-    form = SetIsActiveForm.from_json(request.json)
+    """Activates an user."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = SetIsActiveForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the item to be updated
         user = session.query(User).get(id)
@@ -700,33 +618,28 @@ def activate_user(id):
             data["role"] = user.role.as_dict() if user.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_user.route("/<int:id>/role", methods=["PUT"])
 @ensure_authorized
 @swag_from("swagger/user/change_user_role.yml")
 def change_user_role(id):
-    # If data form is submitted
-    form = UserRoleForm.from_json(request.json)
+    """Modifies an user's role."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = UserRoleForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the item to be updated
         user = session.query(User).get(id)
@@ -765,25 +678,23 @@ def change_user_role(id):
             data["role"] = user.role.as_dict() if user.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_user.route("", methods=["GET"])
 @ensure_authorized
 @swag_from("swagger/user/index_item.yml")
 def index_user():
+    """Lists the existing users."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -798,7 +709,8 @@ def index_user():
     # Defining the class for the data model, must be updated for different models
     model = User
     # Getting the model relationships and evaluating the call string in order to load the relationships
-    # TODO: if there is a better way to do this without 'eval', it should be used (https://realpython.com/python-eval-function/)
+    # TODO: if there is a better way to do this without 'eval', it should be used
+    # Check: https://realpython.com/python-eval-function/
     # However, this shouldn't represent a risk, since the string being used can be trusted
     # We've tried creating 'tuples', 'maps', 'lists', etc. but kept getting the following error:
     # "mapper option expects string key or list of attributes"
@@ -812,11 +724,8 @@ def index_user():
 
     # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -844,30 +753,26 @@ def index_user():
         #    r.role.children = Test.query.get(r.role.children_id)
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_user.route("", methods=["POST"])
 @ensure_authorized
 @swag_from("swagger/user/create_item.yml")
 def create_user():
-    # If data form is submitted
-    form = CreateUserForm.from_json(request.json)
+    """Creates a new user."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = CreateUserForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # If an email was provided
         if form.email.data:
@@ -928,7 +833,6 @@ def create_user():
             session.commit()
             return jsonify({"data": user.as_dict(), "meta": {"success": True}})
 
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -937,14 +841,13 @@ def create_user():
             )
 
 
-# Set the route and accepted methods
 @mod_user.route("/<int:id>", methods=["GET"])
 @ensure_authorized
 @swag_from("swagger/user/get_item_by_id.yml")
 def get_user_by_id(id):
-    # Creating the session for database communication
+    """Gets an existing user by its id."""
+
     with AppSession() as session:
-        # Defining the class for the data model, must be updated for different models
         model = User
         selectinloads = eval(
             "".join(
@@ -959,7 +862,6 @@ def get_user_by_id(id):
         if item:
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
 
-        # If no item is found
         return (
             jsonify(
                 {"data": [], "meta": {"success": False, "errors": _("No item found")}}
@@ -968,23 +870,20 @@ def get_user_by_id(id):
         )
 
 
-# Set the route and accepted methods
 @mod_user.route("/<int:id>", methods=["PUT"])
 @ensure_authorized
 @swag_from("swagger/user/update_item.yml")
 def update_user(id):
-    # If data form is submitted
-    form = UpdateUserForm.from_json(request.json)
+    """Updates an existing user."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = UpdateUserForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the user object
         user = session.query(User).get(id)
@@ -1063,22 +962,20 @@ def update_user(id):
             data["role"] = user.role.as_dict() if user.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_user.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 @swag_from("swagger/user/delete_item.yml")
 def delete_user(id):
-    # Creating the session for database communication
+    """Deletes an existing user."""
+
     with AppSession() as session:
         # Searching item by ID
         item = session.query(User).get(id)
@@ -1136,7 +1033,6 @@ def delete_user(id):
                 remove_file(avatar_thumbnail_url)
             return jsonify({"data": "", "meta": {"success": True}}), 204
 
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1145,11 +1041,12 @@ def delete_user(id):
             )
 
 
-# Set the route and accepted methods
 @mod_profile.route("", methods=["GET"])
 @ensure_authenticated
 @swag_from("swagger/profile/get_profile.yml")
 def get_profile():
+    """Gets an user's profile."""
+
     # Getting the user object
     user = g.user
     # If no user is found
@@ -1173,12 +1070,12 @@ def get_profile():
     return jsonify({"data": data, "meta": {"success": True}})
 
 
-# Set the route and accepted methods
 @mod_profile.route("/avatar", methods=["POST"])
 @ensure_authenticated
 @swag_from("swagger/profile/update_avatar.yml")
 def update_avatar():
-    # Creating the session for database communication
+    """Updates an user avatar picture."""
+
     with AppSession() as session:
         # If required, we can access the multipart/form-data like so:
         # form_data = dict(request.form)
@@ -1198,10 +1095,8 @@ def update_avatar():
                 404,
             )
 
-        # If user is found
-        # We get the provided file
+        # Get the provided file and set filename with timestamp to create almost unique filename
         file = request.files["avatar"]
-        # Setting filename with timestamp to create almost unique filename
         filename = f"{round(time.time()*1000)}-{secure_filename(file.filename)}"
 
         # Checking for not allowed file extensions
@@ -1268,33 +1163,28 @@ def update_avatar():
             data["role"] = user.role.as_dict() if user.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_profile.route("", methods=["PUT"])
 @ensure_authenticated
 @swag_from("swagger/profile/update_profile.yml")
 def update_profile():
-    # If data form is submitted
-    form = UpdateProfileForm.from_json(request.json)
+    """Updates an user's profile."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = UpdateProfileForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the user object
         user = session.query(User).get(g.user.id)
@@ -1388,24 +1278,22 @@ def update_profile():
             data["role"] = user.role.as_dict() if user.role else None
             return jsonify({"data": data, "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_role.route("", methods=["GET"])
 @ensure_authorized
 def index_role():
+    """Lists the existing roles."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -1417,7 +1305,6 @@ def index_role():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = Role
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
@@ -1425,11 +1312,8 @@ def index_role():
 
     # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -1452,29 +1336,25 @@ def index_role():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_role.route("", methods=["POST"])
 @ensure_authorized
 def create_role():
-    # If data form is submitted
-    form = CreateRoleForm.from_json(request.json)
+    """Creates a new role."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = CreateRoleForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         try:
             # Creating new role
@@ -1483,7 +1363,6 @@ def create_role():
             session.flush()
             session.commit()
             return jsonify({"data": role.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1492,11 +1371,11 @@ def create_role():
             )
 
 
-# Set the route and accepted methods
 @mod_role.route("/<int:id>", methods=["GET"])
 @ensure_authorized
 def get_role_by_id(id):
-    # Creating the session for database communication
+    """Gets an existing role by its id."""
+
     with AppSession() as session:
         # Searching item by ID
         role = session.query(Role).get(id)
@@ -1513,26 +1392,22 @@ def get_role_by_id(id):
                 404,
             )
 
-        # If item is found
         return jsonify({"data": role.as_dict(), "meta": {"success": True}})
 
 
-# Set the route and accepted methods
 @mod_role.route("/<int:id>", methods=["PUT"])
 @ensure_authorized
 def update_role(id):
-    # If data form is submitted
-    form = UpdateRoleForm.from_json(request.json)
+    """Updates an existing role."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = UpdateRoleForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
         # Getting the item to be updated
         role = session.query(Role).get(id)
@@ -1557,26 +1432,22 @@ def update_role(id):
             session.commit()
             return jsonify({"data": role.as_dict(), "meta": {"success": True}})
 
-        # If something goes wrong while committing
         except Exception as e:
             session.rollback()
-            # Returning the data to the request
             return (
                 jsonify({"data": [], "meta": {"success": False, "errors": str(e)}}),
                 500,
             )
 
 
-# Set the route and accepted methods
 @mod_role.route("/<int:id>/copy", methods=["POST"])
 @ensure_authorized
 def copy_role(id):
-    # If data form is submitted
-    form = CopyRoleForm.from_json(request.json)
+    """Copies an existing role, with its associated allowed actions."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = CopyRoleForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
@@ -1600,7 +1471,6 @@ def copy_role(id):
     else:
         name = original_role.name[:123] + " (2)"
 
-    # Creating the session for database communication
     with AppSession() as session:
         try:
             # Creating new role
@@ -1643,7 +1513,7 @@ def copy_role(id):
             # Comitting the changes
             session.commit()
             return jsonify({"data": role.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
+
         except Exception as e:
             session.rollback()
             return (
@@ -1652,11 +1522,11 @@ def copy_role(id):
             )
 
 
-# Set the route and accepted methods
 @mod_role.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_role(id):
-    # Creating the session for database communication
+    """Deletes an existing role."""
+
     with AppSession() as session:
         # Searching item by ID
         item = session.query(Role).get(id)
@@ -1673,7 +1543,6 @@ def delete_role(id):
                 404,
             )
 
-        # If the item is found
         # Checking if there are relationships defined for the item
         # TODO: check for newly created relationships
         if User.query.filter(User.role_id == id).first() is not None:
@@ -1695,7 +1564,6 @@ def delete_role(id):
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1704,14 +1572,14 @@ def delete_role(id):
             )
 
 
-# Set the route and accepted methods
 @mod_role_api_route.route("", methods=["GET"])
 @ensure_authorized
 def index_role_api_route():
+    """Lists the existing associations between roles and API routes."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -1723,7 +1591,6 @@ def index_role_api_route():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = RoleAPIRoute
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
@@ -1731,11 +1598,8 @@ def index_role_api_route():
 
     # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -1758,32 +1622,27 @@ def index_role_api_route():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_role_api_route.route("", methods=["POST"])
 @ensure_authorized
 def create_role_api_route():
-    # If data form is submitted
-    form = CreateRoleAPIRouteForm.from_json(request.json)
-    # Getting the model
-    model = RoleAPIRoute
+    """Associates an existing API route to a role."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = CreateRoleAPIRouteForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
+        model = RoleAPIRoute
         # Checking if role exists
         if session.query(Role).get(form.role_id.data) is None:
             return (
@@ -1832,7 +1691,6 @@ def create_role_api_route():
             session.flush()
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1841,11 +1699,11 @@ def create_role_api_route():
             )
 
 
-# Set the route and accepted methods
 @mod_role_api_route.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_role_api_route(id):
-    # Creating the session for database communication
+    """Removes an API route from a role."""
+
     with AppSession() as session:
         # Searching item by ID
         item = session.query(RoleAPIRoute).get(id)
@@ -1862,12 +1720,10 @@ def delete_role_api_route(id):
                 404,
             )
 
-        # If the item is found
         try:
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -1876,14 +1732,14 @@ def delete_role_api_route(id):
             )
 
 
-# Set the route and accepted methods
 @mod_role_web_action.route("", methods=["GET"])
 @ensure_authorized
 def index_role_web_action():
+    """Lists the existing associations between roles and web actions."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -1903,11 +1759,8 @@ def index_role_web_action():
 
     # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -1930,32 +1783,27 @@ def index_role_web_action():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_role_web_action.route("", methods=["POST"])
 @ensure_authorized
 def create_role_web_action():
-    # If data form is submitted
-    form = CreateRoleWebActionForm.from_json(request.json)
-    # Getting the model
-    model = RoleWebAction
+    """Associates an existing web action to a role."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = CreateRoleWebActionForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
+        model = RoleWebAction
         # Checking if role exists
         if session.query(Role).get(form.role_id.data) is None:
             return (
@@ -1999,7 +1847,6 @@ def create_role_web_action():
             session.flush()
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -2008,11 +1855,11 @@ def create_role_web_action():
             )
 
 
-# Set the route and accepted methods
 @mod_role_web_action.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_role_web_action(id):
-    # Creating the session for database communication
+    """Removes a web action from a role."""
+
     with AppSession() as session:
         # Searching item by ID
         item = session.query(RoleWebAction).get(id)
@@ -2029,12 +1876,10 @@ def delete_role_web_action(id):
                 404,
             )
 
-        # If the item is found
         try:
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -2043,14 +1888,14 @@ def delete_role_web_action(id):
             )
 
 
-# Set the route and accepted methods
 @mod_role_mobile_action.route("", methods=["GET"])
 @ensure_authorized
 def index_role_mobile_action():
+    """Lists the existing associations between roles and mobile actions."""
+
     # Pagination
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=25, type=int)
-    # Setting up a maximum number of results per page, even if limit exceeds it
     max_per_page = 250
     # Filtering and sorting
     filter = request.args.get("filter", default="[]", type=str)
@@ -2062,7 +1907,6 @@ def index_role_mobile_action():
     except:
         q_tz = pytz.timezone(os.getenv("TZ", "UTC"))
 
-    # Defining the class for the data model, must be updated for different models
     model = RoleMobileAction
     selectinloads = eval(
         "".join(f"selectinload({r}), " for r in list(model.__mapper__.relationships))
@@ -2070,11 +1914,8 @@ def index_role_mobile_action():
 
     # Trying to obtain data from models
     try:
-        # Retrieving the sorting attributes
         sort_attrs = get_sort_attrs(model, sort)
-        # Retrieving the join relationship models
         join_attrs = get_join_attrs(model, filter, sort)
-        # Retrieving the filtering attributes
         filter_attrs = get_filter_attrs(model, filter, q_tz)
 
         # Searching itens by filters and sorting
@@ -2097,32 +1938,27 @@ def index_role_mobile_action():
             )
         data = [r.as_dict(q_tz) for r in res.items] if len(res.items) > 0 else []
 
-        # Returning data and meta
         return jsonify({"data": data, "meta": {"success": True, "count": res.total}})
-    # If something goes wrong
+
     except Exception as e:
         return jsonify({"data": {}, "meta": {"success": False, "errors": str(e)}}), 500
 
 
-# Set the route and accepted methods
 @mod_role_mobile_action.route("", methods=["POST"])
 @ensure_authorized
 def create_role_mobile_action():
-    # If data form is submitted
-    form = CreateRoleMobileActionForm.from_json(request.json)
-    # Getting the model
-    model = RoleMobileAction
+    """Associates an existing mobile action to a role."""
 
-    # If something goes wrong when validating provided data
+    # Validates provided data
+    form = CreateRoleMobileActionForm.from_json(request.json)
     if not form.validate():
-        # Returning the data to the request
         return (
             jsonify({"data": [], "meta": {"success": False, "errors": form.errors}}),
             400,
         )
 
-    # Creating the session for database communication
     with AppSession() as session:
+        model = RoleMobileAction
         # Checking if role exists
         if session.query(Role).get(form.role_id.data) is None:
             return (
@@ -2166,7 +2002,6 @@ def create_role_mobile_action():
             session.flush()
             session.commit()
             return jsonify({"data": item.as_dict(), "meta": {"success": True}})
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
@@ -2175,11 +2010,11 @@ def create_role_mobile_action():
             )
 
 
-# Set the route and accepted methods
 @mod_role_mobile_action.route("/<int:id>", methods=["DELETE"])
 @ensure_authorized
 def delete_role_mobile_action(id):
-    # Creating the session for database communication
+    """Removes a mobile action from a role."""
+
     with AppSession() as session:
         # Searching item by ID
         item = session.query(RoleMobileAction).get(id)
@@ -2196,12 +2031,10 @@ def delete_role_mobile_action(id):
                 404,
             )
 
-        # If the item is found
         try:
             session.delete(item)
             session.commit()
             return jsonify({"data": "", "meta": {"success": True}}), 204
-        # If an error occurrs
         except Exception as e:
             session.rollback()
             return (
